@@ -1,0 +1,27 @@
+{
+  "name": "philitas",
+  "author": "Ivan Jovanovic",
+  "version": "1.0.0",
+  "private": false,
+  "scripts": {
+    "start": "node -r esm ./bin/www",
+    "devstart": "nodemon -r esm ./bin/www"
+  },
+  "dependencies": {
+    "bcrypt": "^4.0.1",
+    "cookie-parser": "~1.4.5",
+    "cors": "^2.8.5",
+    "debug": "~4.1.1",
+    "esm": "^3.2.25",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "hbs": "^4.1.1",
+    "http-errors": "~1.7.3",
+    "mongoose": "^5.9.18",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
