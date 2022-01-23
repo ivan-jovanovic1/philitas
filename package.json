@@ -8,7 +8,7 @@
     "devstart": "nodemon -r esm ./bin/www"
   },
   "dependencies": {
-    "bcrypt": "^4.0.1",
+    "bcrypt": "^5.0.1",
     "cookie-parser": "~1.4.5",
     "cors": "^2.8.5",
     "debug": "~4.1.1",
