@@ -1,14 +1,15 @@
-import createError from 'http-errors';
-import express from 'express';
-import path  from 'path';
-import cookieParser from 'cookie-parser';
-const logger = require('morgan'); // deprecation warning with import keyword 
-import mongoose from 'mongoose';
-import cors from 'cors';
-import {dbString, dbPw} from './config';
-import indexRouter from './routes/index';
+import createError from 'http-errors'
+import express from 'express'
+import path  from 'path'
+import cookieParser from 'cookie-parser'
+const logger = require('morgan') // deprecation warning with import keyword 
+import mongoose from 'mongoose'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import indexRouter from './routes/index'
 
 const app = express();
+dotenv.config()
 
 const mongoDB = dbString; 
 
