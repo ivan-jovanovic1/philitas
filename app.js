@@ -8,18 +8,17 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import indexRouter from './routes/index'
 
-const app = express();
+
+const app = express()
 dotenv.config()
 
-const mongoDB = dbString; 
+mongoose.connect(process.env.CONNECTION_STRING)
 
-mongoose.connect(mongoDB);
+mongoose.Promise = global.Promise
 
-mongoose.Promise = global.Promise;
+const db = mongoose.connection
 
-const db = mongoose.connection;
-
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.on('error', console.error.bind(console, 'MongoDB connection error:'))
 
 const allowedOrigins = ['http://localhost:4200','http://localhost:3000',
                       'http://yourapp.com'];
@@ -47,8 +46,8 @@ app.use(session({
 }));
 
 app.use( (req, res, next) => {
-  res.locals.session = req.session;
-  next();
+  res.locals.session = req.session
+  next()
 });
 
 app.use(logger('dev'));
@@ -61,15 +60,15 @@ app.use('/', indexRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));
-});
+})
 
 app.use(function(err, req, res, next) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  res.locals.message = err.message
+  res.locals.error = req.app.get('env') === 'development' ? err : {}
 
-  res.status(err.status || 500);
-  res.render('error');
-});
+  res.status(err.status || 500)
+  res.render('error')
+})
 
 app.set('json spaces', 1)
 
