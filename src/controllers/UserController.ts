@@ -82,24 +82,31 @@ export namespace UserController {
       .then((user) => {
         const jwsToken = sign(
           { username: user.username, role: "something" },
-          process.env.JWS_TOKEN_SECRET
+          process.env.JWS_TOKEN_SECRET,
+          { expiresIn: "7d" }
         );
+
+        UserModel.updateOne({ _id: req.body._id }, { authToken: jwsToken })
+          .then((result) => {
+            const jsonBody = {
+              username: user.username,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              jwsToken: jwsToken,
+            };
+
+            return res.status(200).json(jsonBody);
+          })
+          .catch((error) => {
+            return res.status(500).json(new Error("Internal server error"));
+          });
 
         /// TODO: Check why  this doesn't work
         // req.session.user = {
         //   id: user._id,
         //   jwsToken: jwsToken,
         // };
-
-        const jsonBody = {
-          username: user.username,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          jwsToken: jwsToken,
-        };
-
-        return res.status(200).json(jsonBody);
       })
       .catch((failure) => {
         console.log(failure);
