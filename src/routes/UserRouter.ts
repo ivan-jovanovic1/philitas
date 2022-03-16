@@ -1,13 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { UserController } from "../controllers/UserController";
 import { json } from "body-parser";
-import authenticateToken from "./auth-helpers/AuthenticateToken";
+import authenticateToken from "../helpers/auth-helpers/AuthenticateToken";
 
-declare var process: {
-  env: {
-    JWS_TOKEN_SECRET: string;
-  };
-};
 const router = Router();
 
 /* GET home page. */
