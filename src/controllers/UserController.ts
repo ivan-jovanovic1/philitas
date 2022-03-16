@@ -1,12 +1,7 @@
 import { UserModel, authenticate } from "../models/User";
 import { NextFunction, Request, Response } from "express";
 import { sign } from "jsonwebtoken";
-
-declare var process: {
-  env: {
-    JWS_TOKEN_SECRET: string;
-  };
-};
+import { process } from "../helpers/auth-helpers/AuthenticateToken";
 
 export namespace UserController {
   export async function list(req: Request, res: Response) {
@@ -18,22 +13,6 @@ export namespace UserController {
         message: "Error when getting list of all users.",
         error: err,
       });
-    }
-  }
-
-  export async function show(req: Request, res: Response) {
-    const id = req.params.id;
-    try {
-      const user = await UserModel.findOne({ _id: id });
-      if (!user) {
-        return res.status(404).json({
-          message: "No such user",
-        });
-      } else {
-        return res.json(user);
-      }
-    } catch (err) {
-      return res.status(500).json(err);
     }
   }
 
@@ -61,18 +40,6 @@ export namespace UserController {
     } catch (err) {
       return res.status(500).json({
         message: "Error when creating user",
-        error: err,
-      });
-    }
-  }
-
-  export async function deleteUser(req: Request, res: Response) {
-    try {
-      await UserModel.findByIdAndRemove(req.params.id);
-      res.json("Uspešno izbrisan uporabnik.");
-    } catch (err) {
-      return res.status(500).json({
-        message: "Error when deleting user",
         error: err,
       });
     }
@@ -131,14 +98,6 @@ export namespace UserController {
       }
     }
   }
-
-  // export async function showLogin(req, res) {
-  //     res.render('user/login');
-  // }
-
-  // static showRegister(req, res) {
-  //     res.render('user/register');
-  // }
 }
 
 export default UserController;

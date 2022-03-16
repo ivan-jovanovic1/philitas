@@ -37,4 +37,4 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   return res.json(new Error("Unauthorized"));
 };
 
-export default authenticateToken;
+export { process, authenticateToken };
