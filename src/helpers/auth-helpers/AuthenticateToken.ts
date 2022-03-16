@@ -31,7 +31,10 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
       .catch((error) => {
         return res.json(new Error("Internal server error"));
       });
+    return res.json(new Error("Unauthorized"));
   });
+
+  return res.json(new Error("Unauthorized"));
 };
 
 export default authenticateToken;
