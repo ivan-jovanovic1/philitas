@@ -51,7 +51,9 @@ export namespace UserController {
         username: req.body.username,
       });
       if (!takenUsername) {
+        console.log("saving user");
         user.save();
+
         return res.status(201).json(user);
       } else {
         return res.json("Username is taken");
@@ -80,13 +82,18 @@ export namespace UserController {
     console.log(`Ivan, geslo ${req.body.password}`);
     authenticate(req.body.username, req.body.password)
       .then((user) => {
+        // Create JWSToken
         const jwsToken = sign(
-          { username: user.username, role: "something" },
-          process.env.JWS_TOKEN_SECRET,
-          { expiresIn: "7d" }
+          { username: user.username }, // provided username
+          process.env.JWS_TOKEN_SECRET, // secret key
+          { expiresIn: "7d" } // options
         );
 
-        UserModel.updateOne({ _id: req.body._id }, { authToken: jwsToken })
+        // Insert JWSToken in database so app can use it in the user authentication process
+        UserModel.updateOne(
+          { username: req.body.username },
+          { authToken: jwsToken }
+        )
           .then((result) => {
             const jsonBody = {
               username: user.username,
@@ -101,12 +108,6 @@ export namespace UserController {
           .catch((error) => {
             return res.status(500).json(new Error("Internal server error"));
           });
-
-        /// TODO: Check why  this doesn't work
-        // req.session.user = {
-        //   id: user._id,
-        //   jwsToken: jwsToken,
-        // };
       })
       .catch((failure) => {
         console.log(failure);

@@ -30,7 +30,6 @@ class User {
   email: string;
   isVerified: boolean;
   authToken?: string;
-
   firstName?: string;
   lastName?: string;
 
@@ -72,6 +71,7 @@ const authenticate = (username: string, password: string) => {
               user?.email != undefined &&
               user?._id != undefined
             ) {
+              console.log(user);
               resolve({
                 _id: user!._id,
                 username: user!.username,
@@ -83,6 +83,7 @@ const authenticate = (username: string, password: string) => {
               reject(new Error("Internal server error."));
             } //   resolve( );
           } else {
+            console.log("FF8");
             return reject(new Error("Wrong credentials"));
           }
         });
