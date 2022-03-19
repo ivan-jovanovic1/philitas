@@ -228,13 +228,12 @@ const processPagination = (pagination: cheerio.TagElement) => {
   };
 
   for (const child of pagination.children) {
-    if (!isTagElement(child) || child.name !== "li") continue;
+    const ch: any = child;
+    if (ch.name !== "li") continue;
 
     const foundedPage =
-      isTagElement(child.children[0]) &&
-      isTagElement(child.children[0].children[0]) &&
-      child.children[0].children[0].data !== undefined
-        ? Number(child.children[0].children[0].data)
+      ch.children[0].children[0].data !== undefined
+        ? Number(ch.children[0].children[0].data)
         : Number.NaN;
 
     if (isNaN(foundedPage)) continue;
@@ -242,7 +241,7 @@ const processPagination = (pagination: cheerio.TagElement) => {
     const foundedPageNumber = Number(foundedPage);
 
     /// current page
-    if (child.attribs.class === "active") {
+    if (ch.attribs.class === "active") {
       paginationResult.currentPage = foundedPageNumber;
       continue;
     }
@@ -275,10 +274,8 @@ const wordMainLanguage = (element: any) => {
  * @see removeDiacritics function.
  */
 const wordFromElement = (element: any) => {
-  if (element.children[3].children[0].data !== undefined)
-    return removeDiacritics(element.children[3].children[0].data);
-
-  return "";
+  const data = element.children[3].children[0].data;
+  return data !== undefined ? removeDiacritics(data) : "";
 };
 
 /**
@@ -287,11 +284,8 @@ const wordFromElement = (element: any) => {
  * @returns Dictionary name without prefix "Vir: " if found, empty string otherwise.
  */
 const dictionaryFromElement = (element: any) => {
-  if (isTextElement(element.children[7].children[0])) {
-    const dict = element.children[7].children[0].data;
-    return dict !== undefined ? dict.replace("Vir: ", "") : "";
-  }
-  return "";
+  const dict = element.children[7].children[0].data;
+  return dict !== undefined ? dict.replace("Vir: ", "") : "";
 };
 
 /**
