@@ -181,14 +181,7 @@ const processSingleElement = (
     language: "",
   };
 
-  // word main language
-  // this determines if word itself is shown in EN (computer), SL(računalnik)...
-  // NOTE: explanations are always in SI
-  const mainLanguage =
-    isTagElement(element.children[1]) &&
-    element.children[1].children[0].data !== undefined
-      ? element.children[1].children[0].data
-      : "";
+  const mainLanguage = wordMainLanguage(element);
 
   // check if data is from main section
   const isMainSection = section === "main";
@@ -265,8 +258,19 @@ const processPagination = (pagination: cheerio.TagElement) => {
 };
 
 /**
+ * Determines main language for a given word. Explanations are always in Slovene.
  *
- * @param element A word with explanations, dictionary name...
+ * @param element The word with explanations, dictionary name, main language...
+ * @returns Word main language if succeeds (e.g. "en" or "sl"), empty string otherwise.
+ */
+const wordMainLanguage = (element: any) => {
+  const wordData = element.children[1].children[0].data;
+  return wordData !== undefined ? wordData : "";
+};
+
+/**
+ *
+ * @param element A word with explanations, dictionary name, main language...
  * @returns The word without diacritis if found, empty string otherwise.
  * @see removeDiacritics function.
  */
@@ -279,7 +283,7 @@ const wordFromElement = (element: any) => {
 
 /**
  *
- * @param element A word with explanations, dictionary name...
+ * @param element A word with explanations, dictionary name, main language...
  * @returns Dictionary name without prefix "Vir: " if found, empty string otherwise.
  */
 const dictionaryFromElement = (element: any) => {
