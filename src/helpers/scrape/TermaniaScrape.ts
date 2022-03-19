@@ -4,6 +4,13 @@ import util from "util";
 import { SectionResults, Word } from "../../models/Word";
 import { removeDiacritics } from "../RemoveDiactritis";
 
+/**
+ * Main function that scrapes data from termania.net.
+ *
+ * @param word Query word.
+ * @param page Current page
+ * @returns Resolved promise of words with explanations if succeeds, rejected promise with error otherwise.
+ */
 const scrapeTermania = (word: string, page: number = 1) => {
   const url = `https://www.termania.net/iskanje?ld=58&ld=122&query=${word}&page=${page}&SearchIn=Linked`;
   return new Promise(
@@ -18,7 +25,7 @@ const scrapeTermania = (word: string, page: number = 1) => {
         if (!error && response.statusCode === 200) {
           const cheerioAPI = cheerio.load(html);
 
-          /// grab all children list-result with div tag
+          /// Grabs all children list-result with div tag.
           const elements = cheerioAPI(
             'div[id="list-results"] > div, ul'
           ).toArray();
@@ -26,8 +33,10 @@ const scrapeTermania = (word: string, page: number = 1) => {
           let allSections: SectionResults[] = [];
           let pagination: Pagination = { currentPage: 1, allPages: 1 };
 
+          // Current section.
           let section = "";
 
+          // Processes sections, words with explanations and pagination.
           for (const element of elements) {
             if (
               isTagElement(element) &&
@@ -72,6 +81,15 @@ const scrapeTermania = (word: string, page: number = 1) => {
   );
 };
 
+/**
+ * Processes single section.
+ *
+ * @param group List of elements in section .
+ * @param section Current section.
+ * @param word Word from query.
+ * @param url URL with query.
+ * @returns Section with words and explanations.
+ */
 const processResults = (
   group: cheerio.TagElement,
   section: string,
@@ -85,7 +103,15 @@ const processResults = (
 
   for (const el of group.children) {
     if (isTagElement(el) && el.attribs !== undefined) {
-      const newElement = processSingleElement(el, word, section, url);
+      let newElement: Word | null = null;
+
+      if (isTagElement(el.children[1])) {
+        newElement = processSingleElement(el.children[1], word, section, url);
+      }
+
+      // a word may be divided in more than one "block" if the word has different meanings (e.g. word "Mean")
+      // flag alreadyExists guarantees that the same word won't be pushed to another object of type Word.
+      // Instead its explanations will be added to the existing object of type Word.
       let alreadyExists = false;
 
       for (let i = 0; i < results.wordsWithExplanations.length; i++) {
@@ -110,7 +136,12 @@ const processResults = (
   return results;
 };
 
-// determine word section
+/**
+ *
+ * @param element Section element.
+ * @returns String which represents section identifier if succeeds, "unknown" otherwise.
+ *
+ */
 const determineSection = (element: cheerio.TagElement) => {
   let section = "";
   if (isTextElement(element.children[0])) {
@@ -150,45 +181,36 @@ const processSingleElement = (
     language: "",
   };
 
-  if (!isTagElement(element.children[1])) return null;
   // word main language
   // this determines if word itself is shown in EN (computer), SL(računalnik)...
   // NOTE: explanations are always in SI
   const mainLanguage =
-    isTagElement(element.children[1].children[1]) &&
-    element.children[1].children[1].children[0].data !== undefined
-      ? element.children[1].children[1].children[0].data
+    isTagElement(element.children[1]) &&
+    element.children[1].children[0].data !== undefined
+      ? element.children[1].children[0].data
       : "";
 
   // check if data is from main section
   const isMainSection = section === "main";
 
   // get dictionary name without "Vir: " prefix
-  if (
-    isTagElement(element.children[1].children[7]) &&
-    isTextElement(element.children[1].children[7].children[0])
-  ) {
-    const dict = element.children[1].children[7].children[0].data;
-    if (dict !== undefined) {
-      oneResult.dictionaryName = dict.replace("Vir: ", "");
-    }
-  }
+  oneResult.dictionaryName = dictionaryFromElement(element);
 
   oneResult.word = isMainSection ? removeDiacritics(wordName) : "";
   oneResult.language = mainLanguage;
 
   if (mainLanguage === "sl" && !isMainSection)
-    oneResult.word = wordFromElementSlovene(element);
+    oneResult.word = wordFromElement(element);
 
   if (
-    isTagElement(element.children[1].children[5]) &&
-    isTagElement(element.children[1].children[5].children[0])
+    isTagElement(element.children[5]) &&
+    isTagElement(element.children[5].children[0])
   ) {
     // get word from explanations if current section is not the main section
     // and word language is not SL
     if (!isMainSection) oneResult.word = wordFromElement(element);
 
-    for (const child of element.children[1].children[5].children[0].children) {
+    for (const child of element.children[5].children[0].children) {
       if (!isTagElement(child)) continue;
 
       if (child.name === "strong" && child.children[0].data !== undefined) {
@@ -237,36 +259,44 @@ const processPagination = (pagination: cheerio.TagElement) => {
   return paginationResult;
 };
 
-const wordFromElement = (element: cheerio.TagElement) => {
-  if (
-    isTagElement(element.children[1]) &&
-    isTagElement(element.children[1].children[3]) &&
-    isTagElement(element.children[1].children[3]) &&
-    // isTextElement(element.children[1].children[3].children[0]) &&
-    element.children[1].children[3].children[0].data !== undefined
-  )
-    return removeDiacritics(element.children[1].children[3].children[0].data);
+/**
+ *
+ * @param element A word with explanations, dictionary name...
+ * @returns The word without diacritis if found, empty string otherwise.
+ * @see removeDiacritics function.
+ */
+const wordFromElement = (element: any) => {
+  if (element.children[3].children[0].data !== undefined)
+    return removeDiacritics(element.children[3].children[0].data);
 
   return "";
 };
 
-const wordFromElementSlovene = (element: cheerio.TagElement) => {
-  if (
-    isTagElement(element.children[1]) &&
-    isTagElement(element.children[1].children[3]) &&
-    isTagElement(element.children[1].children[3].children[0])
-  ) {
-    const word = element.children[1].children[3].children[0].data;
-    return word !== undefined ? removeDiacritics(word) : "";
+/**
+ *
+ * @param element A word with explanations, dictionary name...
+ * @returns Dictionary name without prefix "Vir: " if found, empty string otherwise.
+ */
+const dictionaryFromElement = (element: any) => {
+  if (isTextElement(element.children[7].children[0])) {
+    const dict = element.children[7].children[0].data;
+    return dict !== undefined ? dict.replace("Vir: ", "") : "";
   }
-
   return "";
 };
 
+/**
+ * Tries to cast element of type "any" to type cheerio.TagElement
+ * @param element Any value that is potentially cheerio.TagElement from cheerio
+ */
 const isTagElement = (element: any): element is cheerio.TagElement => {
   return element?.attribs !== undefined;
 };
 
+/**
+ * * Tries to cast element of type "any" to type cheerio.TextElement
+ * @param element Any value that is potentially cheerio.TextElement from cheerio
+ */
 const isTextElement = (element: any): element is cheerio.TextElement => {
   return element?.type === "text";
 };
