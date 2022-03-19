@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { scrapeTermania, Pagination } from "../helpers/scrape/TermaniaScrape";
+import { SectionResults, Word } from "../models/Word";
 export namespace WordController {
   export async function singleResult(req: Request, res: Response) {
     // If page param is not a number, set page value to 1 (the first page).
@@ -8,45 +9,45 @@ export namespace WordController {
 
     const word = req.params.word;
 
-    scrapeTermania(word, page)
-      .then((value) => {
-        res.json(value);
-      })
-      .catch((error) => {
-        return res.json(error);
-      });
-    // if (page === null) {
-    //   console.log("LOL");
-    // }
-    // return res.json({
-    //     // scrapeTermania(word, page)
-    // });
-    //     const user = new UserModel({
-    //       email: req.body.email,
-    //       firstName: req.body.firstname,
-    //       lastName: req.body.lastname,
-    //       phoneNumber: req.body.phonenumber,
-    //       username: req.body.username,
-    //       password: req.body.password,
-    //     });
-    //     try {
-    //       let takenUsername = await UserModel.findOne({
-    //         username: req.body.username,
-    //       });
-    //       if (!takenUsername) {
-    //         console.log("saving user");
-    //         user.save();
-    //         return res.status(201).json(user);
-    //       } else {
-    //         return res.json("Username is taken");
-    //       }
-    //     } catch (err) {
-    //       return res.status(500).json({
-    //         message: "Error when creating user",
-    //         error: err,
-    //       });
-    //     }
+    const results: ResponseWithPagination[] = [];
+
+    try {
+      const value = await scrapeTermania(word, page);
+      results.push(value);
+      let i = 0;
+
+      while (i < results.length) {
+        if (isNotLastPage(results[i].pagination)) {
+          const newValue = await scrapeTermania(
+            word,
+            results[i].pagination.currentPage + 1
+          );
+
+          results.push(newValue);
+          console.log(i);
+          console.log(results[i].pagination);
+
+          i++;
+          if (i > 5) break;
+        }
+      }
+
+      res.json(results);
+
+      // res.json(value);
+    } catch (e) {
+      console.error(e);
+    }
   }
+
+  const isNotLastPage = (pagination: Pagination) => {
+    return pagination.currentPage < pagination.allPages;
+  };
 }
 
 export default WordController;
+
+interface ResponseWithPagination {
+  allSections: SectionResults[];
+  pagination: Pagination;
+}
