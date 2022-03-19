@@ -2,6 +2,7 @@ import request from "request";
 import cheerio from "cheerio";
 import util from "util";
 import { SectionResults, Word } from "../../models/Word";
+import { removeDiacritics } from "../RemoveDiactritis";
 
 const scrapeTermania = (word: string, page: number = 1) => {
   const url = `https://www.termania.net/iskanje?ld=58&ld=122&query=${word}&page=${page}&SearchIn=Linked`;
@@ -163,38 +164,29 @@ const processSingleElement = (
   const isMainSection = section === "main";
 
   // get dictionary name without "Vir: " prefix
-  oneResult.dictionaryName =
+  if (
     isTagElement(element.children[1].children[7]) &&
-    isTextElement(element.children[1].children[7].children[0]) &&
-    element.children[1].children[7].children[0].data != undefined
-      ? element.children[1].children[7].children[0].data.replace("Vir: ", "")
-      : "";
+    isTextElement(element.children[1].children[7].children[0])
+  ) {
+    const dict = element.children[1].children[7].children[0].data;
+    if (dict !== undefined) {
+      oneResult.dictionaryName = dict.replace("Vir: ", "");
+    }
+  }
 
-  oneResult.word = isMainSection ? wordName : "";
+  oneResult.word = isMainSection ? removeDiacritics(wordName) : "";
   oneResult.language = mainLanguage;
 
-  if (mainLanguage === "sl" && !isMainSection) {
-    oneResult.word =
-      isTagElement(element.children[1]) &&
-      isTagElement(element.children[1].children[3]) &&
-      isTagElement(element.children[1].children[3].children[0]) &&
-      element.children[1].children[3].children[0].data !== undefined
-        ? element.children[1].children[3].children[0].data
-        : "";
-  }
+  if (mainLanguage === "sl" && !isMainSection)
+    oneResult.word = wordFromElementSlovene(element);
+
   if (
     isTagElement(element.children[1].children[5]) &&
     isTagElement(element.children[1].children[5].children[0])
   ) {
     // get word from explanations if current section is not the main section
     // and word language is not SL
-    if (
-      isTagElement(element.children[1].children[3]) &&
-      isTextElement(element.children[1].children[3].children[0]) &&
-      element.children[1].children[3].children[0].data !== undefined &&
-      !isMainSection
-    )
-      oneResult.word = element.children[1].children[3].children[0].data;
+    if (!isMainSection) oneResult.word = wordFromElement(element);
 
     for (const child of element.children[1].children[5].children[0].children) {
       if (!isTagElement(child)) continue;
@@ -243,6 +235,32 @@ const processPagination = (pagination: cheerio.TagElement) => {
   }
 
   return paginationResult;
+};
+
+const wordFromElement = (element: cheerio.TagElement) => {
+  if (
+    isTagElement(element.children[1]) &&
+    isTagElement(element.children[1].children[3]) &&
+    isTagElement(element.children[1].children[3]) &&
+    // isTextElement(element.children[1].children[3].children[0]) &&
+    element.children[1].children[3].children[0].data !== undefined
+  )
+    return removeDiacritics(element.children[1].children[3].children[0].data);
+
+  return "";
+};
+
+const wordFromElementSlovene = (element: cheerio.TagElement) => {
+  if (
+    isTagElement(element.children[1]) &&
+    isTagElement(element.children[1].children[3]) &&
+    isTagElement(element.children[1].children[3].children[0])
+  ) {
+    const word = element.children[1].children[3].children[0].data;
+    return word !== undefined ? removeDiacritics(word) : "";
+  }
+
+  return "";
 };
 
 const isTagElement = (element: any): element is cheerio.TagElement => {
