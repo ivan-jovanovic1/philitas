@@ -1,6 +1,7 @@
 import request from "request";
 import cheerio from "cheerio";
 import util from "util";
+import { SectionResults, Word } from "../../models/Word";
 
 const scrapeTermania = (word: string, page: number = 1) => {
   const url = `https://www.termania.net/iskanje?ld=58&ld=122&query=${word}&page=${page}&SearchIn=Linked`;
@@ -41,7 +42,6 @@ const scrapeTermania = (word: string, page: number = 1) => {
             ) {
               const results = processResults(element, section, word, url);
               allSections.push(results);
-              //   console.log("\nWord object");
             }
 
             if (
@@ -52,12 +52,12 @@ const scrapeTermania = (word: string, page: number = 1) => {
             }
           }
 
-          console.log(
-            util.inspect(allSections, false, null, true /* enable colors */)
-          );
-          console.log(
-            util.inspect(pagination, false, null, true /* enable colors */)
-          );
+          // console.log(
+          //   util.inspect(allSections, false, null, true /* enable colors */)
+          // );
+          // console.log(
+          //   util.inspect(pagination, false, null, true /* enable colors */)
+          // );
 
           resolve({ allSections, pagination });
 
@@ -112,8 +112,8 @@ const processResults = (
 // determine word section
 const determineSection = (element: cheerio.TagElement) => {
   let section = "";
-  if (isTagElement(element.children[1])) {
-    const sectionData = element.children[1].children[0].data;
+  if (isTextElement(element.children[0])) {
+    const sectionData = element.children[0].data;
     section = sectionData !== undefined ? sectionData : "";
   }
 
@@ -146,6 +146,7 @@ const processSingleElement = (
     explanations: [],
     dictionaryName: "",
     source,
+    language: "",
   };
 
   if (!isTagElement(element.children[1])) return null;
@@ -164,25 +165,14 @@ const processSingleElement = (
   // get dictionary name without "Vir: " prefix
   oneResult.dictionaryName =
     isTagElement(element.children[1].children[7]) &&
-    isTagElement(element.children[1].children[7].children[0]) &&
+    isTextElement(element.children[1].children[7].children[0]) &&
     element.children[1].children[7].children[0].data != undefined
       ? element.children[1].children[7].children[0].data.replace("Vir: ", "")
       : "";
 
   oneResult.word = isMainSection ? wordName : "";
+  oneResult.language = mainLanguage;
 
-  //   var oneResult = {
-  //     word: isMainSection ? wordName : "", // we have reference to word from query only in main section
-  //     explanations: [],
-  //     dictionaryName,
-  //     source,
-  // wordDetailsLink: wordDetails,
-  // mainLanguage: mainLanguage,
-  // mainLanguageTitle: mainLanguageTitle,
-  //   };
-
-  // get word from explanations if current section is not the main section
-  // and main language is SL
   if (mainLanguage === "sl" && !isMainSection) {
     oneResult.word =
       isTagElement(element.children[1]) &&
@@ -192,28 +182,28 @@ const processSingleElement = (
         ? element.children[1].children[3].children[0].data
         : "";
   }
-
-  //   if (mainLanguage === "sl" && explanationInTitle !== word) {
-  //     oneResult.explanations.push(explanationInTitle);
-  //   }
-
   if (
     isTagElement(element.children[1].children[5]) &&
     isTagElement(element.children[1].children[5].children[0])
-  )
+  ) {
+    // get word from explanations if current section is not the main section
+    // and word language is not SL
+    if (
+      isTagElement(element.children[1].children[3]) &&
+      isTextElement(element.children[1].children[3].children[0]) &&
+      element.children[1].children[3].children[0].data !== undefined &&
+      !isMainSection
+    )
+      oneResult.word = element.children[1].children[3].children[0].data;
+
     for (const child of element.children[1].children[5].children[0].children) {
       if (!isTagElement(child)) continue;
 
-      if (mainLanguage !== "sl" && !isMainSection) {
-        // get word from explanations if current section is not the main section
-        // and word language is not SL
-        oneResult.word =
-          child.children[0].data !== undefined ? child.children[0].data : "";
-      }
       if (child.name === "strong" && child.children[0].data !== undefined) {
         oneResult.explanations.push(child.children[0].data);
       }
     }
+  }
 
   return oneResult;
 };
@@ -259,32 +249,13 @@ const isTagElement = (element: any): element is cheerio.TagElement => {
   return element?.attribs !== undefined;
 };
 
-interface SectionResults {
-  section: string;
-  wordsWithExplanations: WordWithExplanation[];
-}
-
-interface WordWithExplanation {
-  word: string;
-  explanations: string[];
-}
-
-interface Word {
-  word: string;
-  explanations: string[];
-  dictionaryName: string;
-  source: string;
-}
+const isTextElement = (element: any): element is cheerio.TextElement => {
+  return element?.type === "text";
+};
 
 interface Pagination {
   currentPage: number;
   allPages: number;
 }
 
-export {
-  scrapeTermania,
-  SectionResults,
-  WordWithExplanation,
-  Word,
-  Pagination,
-};
+export { scrapeTermania, Pagination };

@@ -73,7 +73,7 @@ const authenticate = (username: string, password: string) => {
             ) {
               console.log(user);
               resolve({
-                _id: user!._id,
+                _id: user._id,
                 username: user!.username,
                 password: user!.password,
                 email: user!.email,
@@ -81,9 +81,8 @@ const authenticate = (username: string, password: string) => {
               });
             } else {
               reject(new Error("Internal server error."));
-            } //   resolve( );
+            }
           } else {
-            console.log("FF8");
             return reject(new Error("Wrong credentials"));
           }
         });

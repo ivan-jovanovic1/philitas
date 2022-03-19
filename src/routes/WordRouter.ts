@@ -1,13 +1,11 @@
 import { Router, Request, Response, NextFunction } from "express";
+import { WordController } from "../controllers/WordController";
 
 const WordRouter = Router();
 
 /* GET home page. */
-WordRouter.get("/", (req: Request, res: Response) => {
-  res.json({
-    title: "My express app",
-    description: "Hello world",
-  });
-});
+WordRouter.get("/:word/:page", WordController.singleResult);
+
+WordRouter.get("/:word", WordController.singleResult);
 
 export default WordRouter;
