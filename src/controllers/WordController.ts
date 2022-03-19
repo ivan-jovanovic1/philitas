@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { scrapeTermania, Pagination } from "../helpers/scrape/TermaniaScrape";
 export namespace WordController {
   export async function singleResult(req: Request, res: Response) {
