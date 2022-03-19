@@ -28,7 +28,9 @@ export namespace WordController {
           console.log(results[i].pagination);
 
           i++;
-          if (i > 5) break;
+          // if (i > 5) break;
+        } else {
+          break;
         }
       }
 
