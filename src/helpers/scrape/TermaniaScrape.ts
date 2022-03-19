@@ -222,7 +222,12 @@ const processSingleElement = (
   return oneResult;
 };
 
-/// returns current page and number of all pages
+/**
+ *
+ * @param pagination Element which contains current (active) page and number of all pages.
+ * @returns Current page and number of all pages from website if succeeds.
+ * @returns Default result if fails. By default currentPage and allPages are set to 1.
+ */
 const processPagination = (pagination: cheerio.TagElement) => {
   var paginationResult = {
     currentPage: 1,
