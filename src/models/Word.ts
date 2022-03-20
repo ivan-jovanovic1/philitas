@@ -3,11 +3,6 @@ interface SectionResults {
   wordsWithExplanations: Word[];
 }
 
-interface WordWithExplanation {
-  word: string;
-  explanations: string[];
-}
-
 interface Word {
   word: string;
   explanations: string[];
@@ -16,4 +11,4 @@ interface Word {
   language: string;
 }
 
-export { SectionResults, WordWithExplanation, Word };
+export { SectionResults, Word };
