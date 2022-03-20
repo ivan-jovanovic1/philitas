@@ -12,10 +12,10 @@ export namespace WordController {
     const page = Number.isNaN(pageParam) ? 1 : pageParam;
 
     const word = req.params.word;
-    retrieveFromDB(word).then((value) => {
-      if (value === null) scrapeData(res, word, page);
-      else res.json(value);
-    });
+    const resultDB = await retrieveFromDB(word);
+
+    if (resultDB === null) scrapeData(res, word, page);
+    else res.json(resultDB);
   }
 
   /**
