@@ -96,6 +96,7 @@ const processResults = (
   word: string,
   url: string
 ): SectionResults => {
+  let wordArray: Word[] = [];
   let results: SectionResults = {
     section: section,
     wordsWithExplanations: [],
@@ -137,10 +138,8 @@ const processResults = (
 };
 
 /**
- *
  * @param element Section element.
- * @returns String which represents section identifier if succeeds, "unknown" otherwise.
- *
+ * @returns String which represents section identifier if succeeds, "unknown" otherwise. *
  */
 const determineSection = (element: cheerio.TagElement) => {
   let section = "";

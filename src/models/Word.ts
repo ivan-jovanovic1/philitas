@@ -1,6 +1,6 @@
 interface SectionResults {
   section: string;
-  wordsWithExplanations: WordWithExplanation[];
+  wordsWithExplanations: Word[];
 }
 
 interface WordWithExplanation {

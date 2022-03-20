@@ -12,40 +12,54 @@ export namespace WordController {
     const results: ResponseWithPagination[] = [];
 
     try {
-      const value = await scrapeTermania(word, page);
-      results.push(value);
+      const firstResult = results.push(await scrapeTermania(word, page));
       let i = 0;
 
       while (i < results.length) {
-        if (isNotLastPage(results[i].pagination)) {
-          const newValue = await scrapeTermania(
-            word,
-            results[i].pagination.currentPage + 1
-          );
+        if (!isNotLastPage(results[i].pagination)) break;
 
-          results.push(newValue);
-          console.log(i);
-          console.log(results[i].pagination);
+        const currentResult = await scrapeTermania(
+          word,
+          results[i].pagination.currentPage + 1
+        );
 
-          i++;
-          // if (i > 5) break;
-        } else {
-          break;
-        }
+        if (isOnlySectionOthersInResponse(currentResult)) break;
+
+        results.push(filterSectionOthersFromResult(currentResult));
+        i++;
       }
 
       res.json(results);
-
-      // res.json(value);
     } catch (e) {
       console.error(e);
     }
   }
-
-  const isNotLastPage = (pagination: Pagination) => {
-    return pagination.currentPage < pagination.allPages;
-  };
 }
+
+const isNotLastPage = (pagination: Pagination) => {
+  return pagination.currentPage < pagination.allPages;
+};
+
+const filterSectionOthersFromResult = (
+  currentResult: ResponseWithPagination
+): ResponseWithPagination => {
+  return {
+    allSections: filterSectionOthers(currentResult),
+    pagination: currentResult.pagination,
+  };
+};
+
+const filterSectionOthers = (currentResult: ResponseWithPagination) => {
+  return currentResult.allSections.filter(
+    (element) => element.section !== "others"
+  );
+};
+
+const isOnlySectionOthersInResponse = (
+  currentResult: ResponseWithPagination
+) => {
+  return filterSectionOthers(currentResult).length === 0;
+};
 
 export default WordController;
 
