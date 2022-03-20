@@ -110,8 +110,6 @@ var characterMap: { [index: string]: string } = {
   ĉ: "c",
   Ċ: "C",
   ċ: "c",
-  Č: "C",
-  č: "c",
   C̆: "C",
   c̆: "c",
   Ď: "D",
