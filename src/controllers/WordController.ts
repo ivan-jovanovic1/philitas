@@ -14,8 +14,10 @@ export namespace WordController {
     const word = req.params.word;
     const resultDB = await retrieveFromDB(word);
 
-    if (resultDB === null) scrapeData(res, word, page);
-    else res.json(resultDB);
+    if (resultDB === null) {
+      await scrapeData(res, word, page);
+      res.json(await retrieveFromDB(word));
+    } else res.json(resultDB);
   }
 
   /**
@@ -73,14 +75,16 @@ export namespace WordController {
 
         results.push(Helpers.responseWithoutSectionOthers(currentResult));
         i++;
+        console.log(`Next page: ${i}`);
+        if (i > 10) break;
       } catch (e) {
         console.error(e);
         break;
       }
     }
-    response.json(results);
+    // response.json(results);
 
-    saveWordsToDB(results);
+    await saveWordsToDB(results);
   }
 
   /**
@@ -90,7 +94,7 @@ export namespace WordController {
    */
   async function wordFromDB(word: string) {
     try {
-      const value = await WordModel.findOne({ word: word });
+      const value = await WordModel.findOne({ word: { $regex: word } });
       if (value !== null) return value as Word;
       return null;
     } catch (e) {
@@ -108,6 +112,9 @@ export namespace WordController {
     for (const result of results) {
       for (const section of result.allSections) {
         for (const word of section.wordsWithExplanations) {
+          if (word.language !== "sl" && word.explanations.length === 0)
+            continue;
+
           const wordModel = new WordModel(new Word(word));
 
           try {
