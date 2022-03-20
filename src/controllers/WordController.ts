@@ -12,13 +12,23 @@ export namespace WordController {
     const page = Number.isNaN(pageParam) ? 1 : pageParam;
 
     const word = req.params.word;
+    retrieveFromDB(word).then((value) => {
+      if (value === null) scrapeData(res, word, page);
+      else res.json(value);
+    });
+  }
 
-    const results: ResponseWithPagination[] = [];
-
+  /**
+   * Tries to retrieve a word from DB.
+   *
+   * @param word A word from query.
+   * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
+   */
+  async function retrieveFromDB(word: string) {
     try {
       const wordDB = await wordFromDB(word);
 
-      if (wordDB !== null && wordDB !== undefined) {
+      if (wordDB !== null) {
         await WordModel.updateOne(
           { word: word },
           {
@@ -26,17 +36,34 @@ export namespace WordController {
           },
           { upsert: false }
         );
-
-        return res.json(wordDB);
+        return wordDB;
       }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 
+  /**
+   * Scrapes data from Termania and saves it to DB.
+   *
+   * @param response Express response.
+   * @param word A word from query.
+   * @param page Selected page.
+   */
+  async function scrapeData(response: Response, word: string, page: number) {
+    const results: ResponseWithPagination[] = [];
+    try {
       results.push(await scrapeTermania(word, page));
+    } catch (e) {
+      console.error(e);
+    }
 
-      let i = 0;
+    let i = 0;
 
-      while (i < results.length) {
-        if (!Helpers.isNotLastPage(results[i].pagination)) break;
-
+    while (i < results.length) {
+      if (!Helpers.isNotLastPage(results[i].pagination)) break;
+      try {
         const currentResult = await scrapeTermania(
           word,
           results[i].pagination.currentPage + 1
@@ -46,30 +73,38 @@ export namespace WordController {
 
         results.push(Helpers.responseWithoutSectionOthers(currentResult));
         i++;
+      } catch (e) {
+        console.error(e);
+        break;
       }
+    }
+    response.json(results);
 
-      res.json(results);
+    saveWordsToDB(results);
+  }
 
-      saveResultsToDB(results);
+  /**
+   *
+   * @param word A word from query.
+   * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
+   */
+  async function wordFromDB(word: string) {
+    try {
+      const value = await WordModel.findOne({ word: word });
+      if (value !== null) return value as Word;
+      return null;
     } catch (e) {
       console.error(e);
+      return null;
     }
   }
 
-  function wordFromDB(word: string) {
-    return new Promise(
-      (resolve: (value: Word) => void, reject: (value: Error) => void) => {
-        WordModel.findOne({ word: word })
-          .then((value) => {
-            // cwordDB = value as Word
-            resolve(value as Word);
-          })
-          .catch((error) => reject(new Error(error)));
-      }
-    );
-  }
-
-  async function saveResultsToDB(results: ResponseWithPagination[]) {
+  /**
+   * Tries to save words to DB.
+   *
+   * @param results Results from scrapping.
+   */
+  async function saveWordsToDB(results: ResponseWithPagination[]) {
     for (const result of results) {
       for (const section of result.allSections) {
         for (const word of section.wordsWithExplanations) {
