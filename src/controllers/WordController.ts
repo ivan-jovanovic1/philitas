@@ -28,7 +28,7 @@ export namespace WordController {
 
         if (Helpers.isOnlySectionOthersInResponse(currentResult)) break;
 
-        results.push(Helpers.filterSectionOthersFromResult(currentResult));
+        results.push(Helpers.responseWithoutSectionOthers(currentResult));
         i++;
       }
 
@@ -39,12 +39,24 @@ export namespace WordController {
   }
 }
 
+/**
+ * Helper functions for WordController.
+ */
 namespace Helpers {
+  /**
+   * @param pagination Pagination from the result.
+   * @returns `True` if `currentPage` is less than `allPages`, `false` otherwise.
+   */
   export const isNotLastPage = (pagination: Pagination) => {
     return pagination.currentPage < pagination.allPages;
   };
 
-  export const filterSectionOthersFromResult = (
+  /**
+   *
+   * @param currentResult A result from the response.
+   * @returns Result without section `others`.
+   */
+  export const responseWithoutSectionOthers = (
     currentResult: ResponseWithPagination
   ): ResponseWithPagination => {
     return {
@@ -53,6 +65,10 @@ namespace Helpers {
     };
   };
 
+  /**
+   * @param currentResult A result from the response.
+   * @returns `main` and `translate` sections if they exist, an empty array otherwise.
+   */
   export const filterSectionOthers = (
     currentResult: ResponseWithPagination
   ) => {
@@ -61,6 +77,10 @@ namespace Helpers {
     );
   };
 
+  /**
+   * @param currentResult A result from the response.
+   * @returns `True` if result has only section "others", `false` otherwise.
+   */
   export const isOnlySectionOthersInResponse = (
     currentResult: ResponseWithPagination
   ) => {
