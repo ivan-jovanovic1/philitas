@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
-import { scrapeTermania, Pagination } from "../helpers/scrape/TermaniaScrape";
-import { SectionResults, Word } from "../models/Word";
+import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
+import {
+  Pagination,
+  ResponseWithPagination,
+} from "../scrape/termania/TermaniaModels";
 export namespace WordController {
   export async function singleResult(req: Request, res: Response) {
     // If page param is not a number, set page value to 1 (the first page).
@@ -62,8 +65,3 @@ const isOnlySectionOthersInResponse = (
 };
 
 export default WordController;
-
-interface ResponseWithPagination {
-  allSections: SectionResults[];
-  pagination: Pagination;
-}

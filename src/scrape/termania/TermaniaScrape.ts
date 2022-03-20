@@ -1,9 +1,8 @@
 import request from "request";
 import cheerio from "cheerio";
 import util from "util";
-import { SectionResults, Word } from "../../models/Word";
-import { removeDiacritics } from "../RemoveDiactritis";
-
+import { SectionResults, Word } from "./TermaniaModels";
+import { removeDiacritics } from "../../helpers/RemoveDiactritis";
 /**
  * Main function that scrapes data from termania.net.
  *
