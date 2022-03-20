@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
 import { WordModel, Word, updateSearchHits } from "../models/Word";
+import { UserModel, User } from "../models/User";
+import { verify } from "jsonwebtoken";
+import { process } from "../helpers/auth-helpers/AuthenticateToken";
+
 import {
   Pagination,
   ResponseWithPagination,
@@ -12,12 +16,24 @@ export namespace WordController {
     const page = Number.isNaN(pageParam) ? 1 : pageParam;
 
     const word = req.params.word;
+    await addWordIdToCurrentuser(req, word);
+
     const resultDB = await retrieveFromDB(word);
 
     if (resultDB === null) {
       await scrapeData(res, word, page);
       res.json(await retrieveFromDB(word));
     } else res.json(resultDB);
+  }
+
+  async function addWordIdToCurrentuser(req: Request, word: string) {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (token === undefined) return;
+
+    await UserModel.updateOne(
+      { authToken: token },
+      { $push: { wordIds: word } }
+    );
   }
 
   /**

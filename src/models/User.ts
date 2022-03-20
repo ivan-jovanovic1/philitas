@@ -1,4 +1,4 @@
-import { Schema, model, CallbackError } from "mongoose";
+import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 
@@ -21,6 +21,7 @@ let userSchema = new Schema<User>({
   authToken: { type: String, required: false },
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
+  wordIds: { type: [] as String[], required: false },
 });
 
 class User {
@@ -32,6 +33,7 @@ class User {
   authToken?: string;
   firstName?: string;
   lastName?: string;
+  wordIds: string[];
 
   constructor(
     username: string,
@@ -47,6 +49,7 @@ class User {
     this.isVerified = false;
     this.firstName = firstName;
     this.lastName = lastName;
+    this.wordIds = [];
   }
 }
 
@@ -78,6 +81,7 @@ const authenticate = (username: string, password: string) => {
                 password: user!.password,
                 email: user!.email,
                 isVerified: user!.isVerified,
+                wordIds: user!.wordIds,
               });
             } else {
               reject(new Error("Internal server error."));
@@ -107,4 +111,4 @@ userSchema.pre("save", function (this: User, next) {
 
 const UserModel = model<User>("User", userSchema);
 
-export { UserModel, authenticate };
+export { UserModel, authenticate, User };
