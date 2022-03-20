@@ -19,16 +19,16 @@ export namespace WordController {
       let i = 0;
 
       while (i < results.length) {
-        if (!isNotLastPage(results[i].pagination)) break;
+        if (!Helpers.isNotLastPage(results[i].pagination)) break;
 
         const currentResult = await scrapeTermania(
           word,
           results[i].pagination.currentPage + 1
         );
 
-        if (isOnlySectionOthersInResponse(currentResult)) break;
+        if (Helpers.isOnlySectionOthersInResponse(currentResult)) break;
 
-        results.push(filterSectionOthersFromResult(currentResult));
+        results.push(Helpers.filterSectionOthersFromResult(currentResult));
         i++;
       }
 
@@ -39,29 +39,33 @@ export namespace WordController {
   }
 }
 
-const isNotLastPage = (pagination: Pagination) => {
-  return pagination.currentPage < pagination.allPages;
-};
-
-const filterSectionOthersFromResult = (
-  currentResult: ResponseWithPagination
-): ResponseWithPagination => {
-  return {
-    allSections: filterSectionOthers(currentResult),
-    pagination: currentResult.pagination,
+namespace Helpers {
+  export const isNotLastPage = (pagination: Pagination) => {
+    return pagination.currentPage < pagination.allPages;
   };
-};
 
-const filterSectionOthers = (currentResult: ResponseWithPagination) => {
-  return currentResult.allSections.filter(
-    (element) => element.section !== "others"
-  );
-};
+  export const filterSectionOthersFromResult = (
+    currentResult: ResponseWithPagination
+  ): ResponseWithPagination => {
+    return {
+      allSections: filterSectionOthers(currentResult),
+      pagination: currentResult.pagination,
+    };
+  };
 
-const isOnlySectionOthersInResponse = (
-  currentResult: ResponseWithPagination
-) => {
-  return filterSectionOthers(currentResult).length === 0;
-};
+  export const filterSectionOthers = (
+    currentResult: ResponseWithPagination
+  ) => {
+    return currentResult.allSections.filter(
+      (element) => element.section !== "others"
+    );
+  };
+
+  export const isOnlySectionOthersInResponse = (
+    currentResult: ResponseWithPagination
+  ) => {
+    return filterSectionOthers(currentResult).length === 0;
+  };
+}
 
 export default WordController;
