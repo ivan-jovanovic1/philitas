@@ -1,7 +1,11 @@
 import request from "request";
 import cheerio from "cheerio";
 import util from "util";
-import { SectionResults, Word } from "./TermaniaModels";
+import {
+  TermaniaSectionResults,
+  TermaniaWord,
+  Pagination,
+} from "./TermaniaModels";
 import { removeDiacritics } from "../../helpers/RemoveDiactritis";
 /**
  * Main function that scrapes data from termania.net.
@@ -15,7 +19,7 @@ const scrapeTermania = (word: string, page: number = 1) => {
   return new Promise(
     (
       resolve: (value: {
-        allSections: SectionResults[];
+        allSections: TermaniaSectionResults[];
         pagination: Pagination;
       }) => void,
       reject: (value: Error) => void
@@ -29,7 +33,7 @@ const scrapeTermania = (word: string, page: number = 1) => {
             'div[id="list-results"] > div, ul'
           ).toArray();
 
-          let allSections: SectionResults[] = [];
+          let allSections: TermaniaSectionResults[] = [];
           let pagination: Pagination = { currentPage: 1, allPages: 1 };
 
           // Current section.
@@ -94,16 +98,16 @@ const processResults = (
   section: string,
   word: string,
   url: string
-): SectionResults => {
-  let wordArray: Word[] = [];
-  let results: SectionResults = {
+): TermaniaSectionResults => {
+  let wordArray: TermaniaWord[] = [];
+  let results: TermaniaSectionResults = {
     section: section,
     wordsWithExplanations: [],
   };
 
   for (const el of group.children) {
     if (isTagElement(el) && el.attribs !== undefined) {
-      let newElement: Word | null = null;
+      let newElement: TermaniaWord | null = null;
 
       if (isTagElement(el.children[1])) {
         newElement = processSingleElement(el.children[1], word, section, url);
@@ -171,7 +175,7 @@ const processSingleElement = (
   section: string,
   source: string
 ) => {
-  let oneResult: Word = {
+  let oneResult: TermaniaWord = {
     word: "",
     explanations: [],
     dictionaryName: "",
@@ -302,9 +306,4 @@ const isTextElement = (element: any): element is cheerio.TextElement => {
   return element?.type === "text";
 };
 
-interface Pagination {
-  currentPage: number;
-  allPages: number;
-}
-
-export { scrapeTermania, Pagination };
+export { scrapeTermania };

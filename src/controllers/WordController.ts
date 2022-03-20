@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
+import { WordModel, Word, updateSearchHits } from "../models/Word";
 import {
   Pagination,
   ResponseWithPagination,
@@ -15,7 +16,22 @@ export namespace WordController {
     const results: ResponseWithPagination[] = [];
 
     try {
-      const firstResult = results.push(await scrapeTermania(word, page));
+      const wordDB = await wordFromDB(word);
+
+      if (wordDB !== null && wordDB !== undefined) {
+        await WordModel.updateOne(
+          { word: word },
+          {
+            searchHits: updateSearchHits(wordDB),
+          },
+          { upsert: false }
+        );
+
+        return res.json(wordDB);
+      }
+
+      results.push(await scrapeTermania(word, page));
+
       let i = 0;
 
       while (i < results.length) {
@@ -33,8 +49,39 @@ export namespace WordController {
       }
 
       res.json(results);
+
+      saveResultsToDB(results);
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  function wordFromDB(word: string) {
+    return new Promise(
+      (resolve: (value: Word) => void, reject: (value: Error) => void) => {
+        WordModel.findOne({ word: word })
+          .then((value) => {
+            // cwordDB = value as Word
+            resolve(value as Word);
+          })
+          .catch((error) => reject(new Error(error)));
+      }
+    );
+  }
+
+  async function saveResultsToDB(results: ResponseWithPagination[]) {
+    for (const result of results) {
+      for (const section of result.allSections) {
+        for (const word of section.wordsWithExplanations) {
+          const wordModel = new WordModel(new Word(word));
+
+          try {
+            await wordModel.save();
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
     }
   }
 }

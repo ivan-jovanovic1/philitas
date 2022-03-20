@@ -1,24 +1,28 @@
-interface SectionResults {
+interface TermaniaSectionResults {
   section: string;
-  wordsWithExplanations: Word[];
+  wordsWithExplanations: TermaniaWord[];
 }
 
-interface Word {
+interface TermaniaWord {
   word: string;
   explanations: string[];
   dictionaryName: string;
   source: string;
   language: string;
 }
-
 interface Pagination {
   currentPage: number;
   allPages: number;
 }
 
 interface ResponseWithPagination {
-  allSections: SectionResults[];
+  allSections: TermaniaSectionResults[];
   pagination: Pagination;
 }
 
-export { SectionResults, Word, Pagination, ResponseWithPagination };
+export {
+  TermaniaSectionResults,
+  TermaniaWord,
+  Pagination,
+  ResponseWithPagination,
+};
