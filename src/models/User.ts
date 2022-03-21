@@ -74,7 +74,6 @@ const authenticate = (username: string, password: string) => {
               user?.email != undefined &&
               user?._id != undefined
             ) {
-              console.log(user);
               resolve({
                 _id: user._id,
                 username: user!.username,
