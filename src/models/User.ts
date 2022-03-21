@@ -56,7 +56,18 @@ class User {
 /// Authenticate credentials againts database.
 const authenticate = (username: string, password: string) => {
   return new Promise(
-    (resolve: (value: User) => void, reject: (value: Error) => void) => {
+    (
+      resolve: (value: {
+        _id: string;
+        username: string;
+        email: string;
+        isVerified: boolean;
+        wordIds: string[];
+        firstName: string;
+        lastName: string;
+      }) => void,
+      reject: (value: Error) => void
+    ) => {
       UserModel.findOne({ username: username }).exec((err, user) => {
         if (err) {
           reject(err);
@@ -77,10 +88,11 @@ const authenticate = (username: string, password: string) => {
               resolve({
                 _id: user._id,
                 username: user!.username,
-                password: user!.password,
                 email: user!.email,
                 isVerified: user!.isVerified,
                 wordIds: user!.wordIds,
+                firstName: user?.firstName !== undefined ? user?.firstName : "",
+                lastName: user?.lastName !== undefined ? user?.lastName : "",
               });
             } else {
               reject(new Error("Internal server error."));
