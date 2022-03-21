@@ -2,11 +2,13 @@ import { Router, Request, Response, NextFunction } from "express";
 import { verify } from "jsonwebtoken";
 import { UserModel } from "../../models/User";
 
-declare var process: {
-  env: {
-    JWS_TOKEN_SECRET: string;
-  };
-};
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      JWS_TOKEN_SECRET: string;
+    }
+  }
+}
 
 const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   // Remove "Bearer" prefix as we need only token value
@@ -37,4 +39,4 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   return res.json(new Error("Unauthorized"));
 };
 
-export { process, authenticateToken };
+export { authenticateToken };

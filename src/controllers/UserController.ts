@@ -1,7 +1,7 @@
 import { UserModel, authenticate } from "../models/User";
 import { NextFunction, Request, Response } from "express";
 import { sign } from "jsonwebtoken";
-import { process } from "../helpers/auth-helpers/AuthenticateToken";
+// import { process } from "../helpers/auth-helpers/AuthenticateToken";
 
 export namespace UserController {
   export async function list(req: Request, res: Response) {
