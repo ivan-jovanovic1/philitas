@@ -3,7 +3,6 @@ import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
 import { WordModel, Word, updateSearchHits } from "../models/Word";
 import { UserModel, User } from "../models/User";
 import { verify } from "jsonwebtoken";
-import { process } from "../helpers/auth-helpers/AuthenticateToken";
 
 import {
   Pagination,
@@ -32,7 +31,7 @@ export namespace WordController {
 
     await UserModel.updateOne(
       { authToken: token },
-      { $push: { wordIds: word } }
+      { $addToSet: { wordIds: word } }
     );
   }
 
