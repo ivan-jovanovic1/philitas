@@ -46,40 +46,31 @@ export namespace UserController {
   }
 
   export async function login(req: Request, res: Response, next: NextFunction) {
-    console.log(`Ivan, geslo ${req.body.password}`);
-    authenticate(req.body.username, req.body.password)
-      .then((user) => {
-        // Create JWSToken
-        const jwsToken = sign(
-          { username: user.username }, // provided username
-          process.env.JWS_TOKEN_SECRET, // secret key
-          { expiresIn: "7d" } // options
-        );
+    try {
+      const user = await authenticate(req.body.username, req.body.password);
+      const jwsToken = sign(
+        { username: user.username }, // provided username
+        process.env.JWS_TOKEN_SECRET, // secret key
+        { expiresIn: "7d" } // options
+      );
 
-        // Insert JWSToken in database so app can use it in the user authentication process
-        UserModel.updateOne(
-          { username: req.body.username },
-          { authToken: jwsToken }
-        )
-          .then((result) => {
-            const jsonBody = {
-              username: user.username,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              jwsToken: jwsToken,
-            };
+      await UserModel.updateOne(
+        { username: req.body.username },
+        { authToken: jwsToken }
+      );
 
-            return res.status(200).json(jsonBody);
-          })
-          .catch((error) => {
-            return res.status(500).json(new Error("Internal server error"));
-          });
-      })
-      .catch((failure) => {
-        console.log(failure);
-        return res.status(401).json(failure);
-      });
+      const jsonBody = {
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        jwsToken: jwsToken,
+      };
+      res.status(200).json(jsonBody);
+    } catch (e) {
+      console.error(e);
+      res.status(500).json(new Error("Internal server error"));
+    }
   }
 
   export async function logout(
