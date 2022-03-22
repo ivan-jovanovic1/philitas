@@ -3,6 +3,7 @@ import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
 import { WordModel, Word, updateSearchHits } from "../models/Word";
 import { UserModel, User } from "../models/User";
 import { verify } from "jsonwebtoken";
+import Translate from "../helpers/Translate";
 
 import {
   Pagination,
@@ -126,11 +127,24 @@ export namespace WordController {
   async function saveWordsToDB(results: ResponseWithPagination[]) {
     for (const result of results) {
       for (const section of result.allSections) {
-        for (const word of section.wordsWithExplanations) {
-          if (word.language !== "sl" && word.explanations.length === 0)
+        for (let termaniaWord of section.wordsWithExplanations) {
+          if (
+            termaniaWord.language !== "sl" &&
+            termaniaWord.explanations.length === 0
+          )
             continue;
 
-          const wordModel = new WordModel(new Word(word));
+          let word = new Word(termaniaWord);
+
+          const translation = await Translate.text(
+            termaniaWord.word,
+            termaniaWord.language
+          );
+          if (translation !== null) {
+            word.translatedWord = translation;
+          }
+
+          const wordModel = new WordModel(word);
 
           try {
             await wordModel.save();

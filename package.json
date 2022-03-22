@@ -9,6 +9,7 @@
     "build": "tsc -p ."
   },
   "dependencies": {
+    "@iamtraction/google-translate": "^1.1.2",
     "@types/bcrypt": "^5.0.0",
     "@types/cheerio": "^0.22.31",
     "@types/connect-mongo": "^3.1.3",

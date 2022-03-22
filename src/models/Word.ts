@@ -27,6 +27,7 @@ class SearchHit {
 
 class Word {
   word: string;
+  translatedWord: string;
   dictionaryExplanations: DictionaryExplanation[];
   language: string;
   searchHits: [SearchHit];
@@ -42,6 +43,7 @@ class Word {
     ];
     this.language = termania.language;
     this.searchHits = [createSearchHit()];
+    this.translatedWord = "";
   }
 }
 
@@ -117,6 +119,7 @@ const wordSchema = new Schema<Word>({
     type: [] as DictionaryExplanation[],
     required: true,
   },
+  translatedWord: { type: String, required: true },
   language: { type: String, required: true },
   //   isVerified: { type: Boolean, required: true },
   searchHits: { type: [] as SearchHit[], required: false },
