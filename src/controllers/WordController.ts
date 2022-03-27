@@ -4,18 +4,52 @@ import { WordModel, Word, updateSearchHits } from "../models/Word";
 import { UserModel, User } from "../models/User";
 import { verify } from "jsonwebtoken";
 import Translate from "../helpers/Translate";
-
 import {
   Pagination,
-  ResponseWithPagination,
-} from "../scrape/termania/TermaniaModels";
-export namespace WordController {
-  export async function singleResult(req: Request, res: Response) {
-    // If page param is not a number, set page value to 1 (the first page).
-    const pageParam = Number(req.params.page);
-    const page = Number.isNaN(pageParam) ? 1 : pageParam;
+  normalizedPage,
+  normalizedPageSize,
+  beginAt,
+} from "../models/Pagination";
 
+import { ResponseWithPagination } from "../scrape/termania/TermaniaModels";
+export namespace WordController {
+  /**
+   * Returns a list of words based on page and page size.
+   * The words are sorted by alphabet order.
+   *
+   * @param req Request with page and pageSize parameters.
+   * @param res Response with pagination and the list of the words for the current page.
+   */
+  export async function list(req: Request, res: Response) {
+    const page = normalizedPage(req.query.page);
+    const pageSize = normalizedPageSize(req.query.pageSize);
+
+    const pagination: Pagination = {
+      currentPage: page,
+      allPages: Math.ceil(
+        Number(await WordModel.collection.countDocuments()) / pageSize
+      ),
+      pageSize: pageSize,
+    };
+
+    try {
+      const words = await WordModel.find()
+        .sort({ word: 1 })
+        .skip(beginAt(page, pageSize))
+        .limit(pageSize);
+      res.json({
+        pagination,
+        words,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  export async function singleResult(req: Request, res: Response) {
+    const page = normalizedPage(req.params.page);
     const word = req.params.word;
+
     await addWordIdToCurrentuser(req, word);
 
     const resultDB = await retrieveFromDB(word);
