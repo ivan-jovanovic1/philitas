@@ -1,11 +1,8 @@
 import request from "request";
 import cheerio from "cheerio";
 import util from "util";
-import {
-  TermaniaSectionResults,
-  TermaniaWord,
-  Pagination,
-} from "./TermaniaModels";
+import { Pagination } from "../../models/Pagination";
+import { TermaniaSectionResults, TermaniaWord } from "./TermaniaModels";
 import { removeDiacritics } from "../../helpers/RemoveDiactritis";
 /**
  * Main function that scrapes data from termania.net.
@@ -34,7 +31,11 @@ const scrapeTermania = (word: string, page: number = 1) => {
           ).toArray();
 
           let allSections: TermaniaSectionResults[] = [];
-          let pagination: Pagination = { currentPage: 1, allPages: 1 };
+          let pagination: Pagination = {
+            currentPage: 1,
+            allPages: 1,
+            pageSize: 10,
+          };
 
           // Current section.
           let section = "";
@@ -227,6 +228,7 @@ const processPagination = (pagination: cheerio.TagElement) => {
   var paginationResult = {
     currentPage: 1,
     allPages: 1,
+    pageSize: 10, // Termania has fixed pagination to 10 results
   };
 
   for (const child of pagination.children) {
