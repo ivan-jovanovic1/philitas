@@ -3,25 +3,23 @@ interface Pagination {
   allPages: number;
   pageSize: number;
 }
+namespace Page {
+  const normalized = (param: any, fallback: number) => {
+    const value = Number(param);
+    const isValidNumber = !Number.isNaN(value) && value > 0;
+    return isValidNumber ? value : fallback;
+  };
 
-const normalized = (param: any, fallback: number) => {
-  const page = Number(param);
-  const isValidNumber = !Number.isNaN(page) && page > 0;
+  export const normalizedPage = (param: any) => {
+    return normalized(param, 1);
+  };
 
-  return isValidNumber ? page : fallback;
-};
+  export const normalizedPageSize = (param: any, fallback = 25) => {
+    return normalized(param, fallback);
+  };
 
-const normalizedPage = (param: any) => {
-  return normalized(param, 1);
-};
-
-const normalizedPageSize = (param: any, fallback = 25) => {
-  return normalized(param, fallback);
-};
-
-const beginAt = (page: number, pageSize: number) => {
-  const currentPage = page > 0 ? page : 1;
-  return (currentPage - 1) * pageSize;
-};
-
-export { Pagination, normalizedPage, normalizedPageSize, beginAt };
+  export const beginAt = (page: number, pageSize: number) => {
+    return (normalizedPage(page) - 1) * normalizedPageSize(pageSize);
+  };
+}
+export { Pagination, Page };

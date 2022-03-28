@@ -4,12 +4,7 @@ import { WordModel, Word, updateSearchHits } from "../models/Word";
 import { UserModel, User } from "../models/User";
 import { verify } from "jsonwebtoken";
 import Translate from "../helpers/Translate";
-import {
-  Pagination,
-  normalizedPage,
-  normalizedPageSize,
-  beginAt,
-} from "../models/Pagination";
+import { Pagination, Page } from "../models/Pagination";
 
 import { ResponseWithPagination } from "../scrape/termania/TermaniaModels";
 export namespace WordController {
@@ -21,8 +16,8 @@ export namespace WordController {
    * @param res Response with pagination and the list of the words for the current page.
    */
   export async function list(req: Request, res: Response) {
-    const page = normalizedPage(req.query.page);
-    const pageSize = normalizedPageSize(req.query.pageSize);
+    const page = Page.normalizedPage(req.query.page);
+    const pageSize = Page.normalizedPageSize(req.query.pageSize);
 
     const pagination: Pagination = {
       currentPage: page,
@@ -35,7 +30,7 @@ export namespace WordController {
     try {
       const words = await WordModel.find()
         .sort({ word: 1 })
-        .skip(beginAt(page, pageSize))
+        .skip(Page.beginAt(page, pageSize))
         .limit(pageSize);
       res.json({
         pagination,
@@ -47,7 +42,7 @@ export namespace WordController {
   }
 
   export async function singleResult(req: Request, res: Response) {
-    const page = normalizedPage(req.params.page);
+    const page = Page.normalizedPage(req.params.page);
     const word = req.params.word;
 
     await addWordIdToCurrentuser(req, word);
