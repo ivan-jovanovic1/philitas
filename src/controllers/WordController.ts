@@ -165,12 +165,12 @@ export namespace WordController {
 
           let word = new Word(termaniaWord);
 
-          const translation = await Translate.text(
+          const translation = await Translate.englishSloveneInvertible(
             termaniaWord.word,
             termaniaWord.language
           );
           if (translation !== null) {
-            word.translatedWord = translation;
+            word.translations.push(translation);
           }
 
           const wordModel = new WordModel(word);

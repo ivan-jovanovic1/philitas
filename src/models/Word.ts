@@ -25,12 +25,17 @@ class SearchHit {
   }
 }
 
+interface Translation {
+  language: string;
+  word: string;
+}
+
 class Word {
   word: string;
-  translatedWord: string;
-  dictionaryExplanations: DictionaryExplanation[];
   language: string;
-  searchHits: [SearchHit];
+  dictionaryExplanations: DictionaryExplanation[];
+  searchHits: SearchHit[];
+  translations: Translation[];
 
   constructor(termania: TermaniaWord) {
     this.word = termania.word;
@@ -43,7 +48,7 @@ class Word {
     ];
     this.language = termania.language;
     this.searchHits = [createSearchHit()];
-    this.translatedWord = "";
+    this.translations = [];
   }
 }
 
@@ -75,37 +80,6 @@ const updateSearchHits = (word: Word) => {
 
   return word.searchHits;
 };
-
-// Word.prototype.updateWordUsingTermaniaModel = function (word: TermaniaWord) {
-//   if (!this.isSameWord(word)) return;
-
-//   const newDictionary: DictionaryExplanation = {
-//     explanations: word.explanations,
-//     dictionaryName: word.dictionaryName,
-//     source: word.source,
-//   };
-
-//   let alreadyAdded = false;
-
-//   this.dictionaryExplanations.forEach((dictionary, index) => {
-//     if (
-//       dictionary.dictionaryName === newDictionary.dictionaryName &&
-//       dictionary.source === newDictionary.source
-//     ) {
-//       this.dictionaryExplanations[index].explanations.concat(
-//         newDictionary.explanations
-//       );
-//       alreadyAdded = true;
-//     }
-//   });
-
-//   if (!alreadyAdded) this.dictionaryExplanations.push(newDictionary);
-// };
-
-// Word.prototype.isSameWord = function (word: TermaniaWord) {
-//   return this.word === word.word;
-// };
-
 interface Word {
   createSearchHit(): SearchHit;
   updateSearchHits(): SearchHit[];
@@ -119,12 +93,12 @@ const wordSchema = new Schema<Word>({
     type: [] as DictionaryExplanation[],
     required: true,
   },
-  translatedWord: { type: String, required: true },
   language: { type: String, required: true },
   //   isVerified: { type: Boolean, required: true },
   searchHits: { type: [] as SearchHit[], required: false },
+  translations: { type: [] as Translation[], required: false },
 });
 
 const WordModel = model<Word>("Word", wordSchema);
 
-export { WordModel, Word, updateSearchHits };
+export { WordModel, Word, Translation, updateSearchHits };
