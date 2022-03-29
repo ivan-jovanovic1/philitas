@@ -3,16 +3,26 @@ import { WordController } from "../controllers/WordController";
 
 const WordRouter = Router();
 
-/* GET home page. */
-WordRouter.get("/:word/:page", WordController.singleResult);
+namespace Route {
+  export const list = "/list";
+  export const word = "/:word";
+}
 
-/**
- * Uses query params `page` and `pageSize`.
- * Default value for `page` is 1.
- * Default value for `pageSize` is 25.
- */
-WordRouter.get("/list", WordController.list);
+async function methodFromRoute(req: Request, res: Response) {
+  if (req.route.path === Route.list) {
+    WordController.list(req, res);
+    return;
+  }
 
-// WordRouter.get("/:word", WordController.singleResult);
+  if (req.route.path === Route.word) {
+    WordController.singleResult(req, res);
+    return;
+  }
+
+  res.status(404).send({ errorMessage: "Page not found" });
+}
+
+WordRouter.get(Route.list, methodFromRoute);
+WordRouter.get(Route.word, methodFromRoute);
 
 export default WordRouter;

@@ -5,26 +5,29 @@ import { authenticateToken } from "../helpers/auth-helpers/AuthenticateToken";
 
 const UserRouter = Router();
 
-const registerRoute = "/register";
-const userRoute = "/me";
-const loginRoute = "/login";
+namespace Route {
+  export const register = "/register";
+  export const user = "/me";
+  export const login = "/login";
+}
+
 async function methodFromRoute(req: Request, res: Response) {
-  if (req.route.path === loginRoute) {
+  if (req.route.path === Route.login) {
     UserController.login(req, res);
     return;
   }
 
-  if (req.route.path === registerRoute) {
+  if (req.route.path === Route.register) {
     UserController.create(req, res);
     return;
   }
 
-  if (req.route.path === userRoute) {
+  if (req.route.path === Route.user) {
     UserController.userFromToken(req, res);
     return;
   }
 
-  res.json({ errorMessage: "Invalid page" });
+  res.status(404).send({ errorMessage: "Page not found" });
 }
 
 /* GET home page. */
@@ -35,8 +38,8 @@ UserRouter.get("/", (req: Request, res: Response) => {
   });
 });
 
-UserRouter.get(userRoute, json(), methodFromRoute);
-UserRouter.post(registerRoute, json(), methodFromRoute);
-UserRouter.post(loginRoute, json(), methodFromRoute);
+UserRouter.get(Route.user, json(), methodFromRoute);
+UserRouter.post(Route.register, json(), methodFromRoute);
+UserRouter.post(Route.login, json(), methodFromRoute);
 
 export default UserRouter;
