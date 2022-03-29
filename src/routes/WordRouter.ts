@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
 import { WordController } from "../controllers/WordController";
 
 const WordRouter = Router();

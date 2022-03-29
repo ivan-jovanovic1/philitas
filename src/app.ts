@@ -37,10 +37,7 @@ const db = mongoose.connection;
 
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
-const allowedOrigins: string[] = [
-  "http://localhost:3002",
-  "http://yourapp.com",
-];
+const allowedOrigins: string[] = ["http://localhost:3002"];
 
 app.use("/users", UserRouter);
 app.use("/words", WordRouter);
@@ -71,17 +68,9 @@ app.use(
 
 app.set("json spaces", 1);
 
-app.set("views", path.join(__dirname, "./../views"));
-app.set("view engine", "hbs");
-
 app.use(morgan("dev"));
 app.use(Express.json());
 app.use(Express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(Express.static(path.join(__dirname, "./../public")));
-
-app.use((request: Request, response: Response, next: NextFunction) => {
-  next(httpError(404));
-});
 
 export default app;

@@ -93,8 +93,6 @@ export namespace UserController {
 
     // Verify JSONWebToken
     verify(token, process.env.JWS_TOKEN_SECRET as string, (err, callback) => {
-      // TODO: Add logic to remove token from DB so it can't be used if it already has expired
-
       handleJWSTokenError(err, token, res);
       // Check token with the one in DB
       UserModel.findOne({ authToken: token })

@@ -41,21 +41,26 @@ export namespace WordController {
     }
   }
 
+  /**
+   *
+   * @param req The request with a word param.
+   * @param res The response with a single word.
+   */
   export async function singleResult(req: Request, res: Response) {
     const page = Page.normalizedPage(req.params.page);
     const word = req.params.word;
 
-    await addWordIdToCurrentuser(req, word);
+    await addWordIdToCurrentUser(req, word);
 
     const resultDB = await retrieveFromDB(word);
 
     if (resultDB === null) {
-      await scrapeData(res, word, page);
+      await scrapeData(word, page);
       res.json(await retrieveFromDB(word));
     } else res.json(resultDB);
   }
 
-  async function addWordIdToCurrentuser(req: Request, word: string) {
+  async function addWordIdToCurrentUser(req: Request, word: string) {
     const token = req.headers["authorization"]?.split(" ")[1];
     if (token === undefined) return;
 
@@ -66,9 +71,9 @@ export namespace WordController {
   }
 
   /**
-   * Tries to retrieve a word from DB.
+   * Tries to retrieve the word from DB.
    *
-   * @param word A word from query.
+   * @param word The word from the query.
    * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
    */
   async function retrieveFromDB(word: string) {
@@ -94,11 +99,10 @@ export namespace WordController {
   /**
    * Scrapes data from Termania and saves it to DB.
    *
-   * @param response Express response.
-   * @param word A word from query.
-   * @param page Selected page.
+   * @param word The word from query.
+   * @param page The selected page.
    */
-  async function scrapeData(response: Response, word: string, page: number) {
+  async function scrapeData(word: string, page: number) {
     const results: ResponseWithPagination[] = [];
     try {
       results.push(await scrapeTermania(word, page));
@@ -200,8 +204,8 @@ namespace Helpers {
 
   /**
    *
-   * @param currentResult A result from the response.
-   * @returns Result without section `others`.
+   * @param currentResult The result from the response.
+   * @returns The result without section `others`.
    */
   export const responseWithoutSectionOthers = (
     currentResult: ResponseWithPagination
@@ -213,7 +217,7 @@ namespace Helpers {
   };
 
   /**
-   * @param currentResult A result from the response.
+   * @param currentResult The result from the response.
    * @returns `main` and `translate` sections if they exist, an empty array otherwise.
    */
   export const filterSectionOthers = (
@@ -225,7 +229,7 @@ namespace Helpers {
   };
 
   /**
-   * @param currentResult A result from the response.
+   * @param currentResult The result from the response.
    * @returns `True` if result has only section "others", `false` otherwise.
    */
   export const isOnlySectionOthersInResponse = (
