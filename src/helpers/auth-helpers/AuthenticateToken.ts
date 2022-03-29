@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
-import { verify } from "jsonwebtoken";
-import { UserModel } from "../../models/User";
+import { JwtPayload, verify, VerifyErrors } from "jsonwebtoken";
+import { NIL } from "uuid";
+import { User, UserModel } from "../../models/User";
 
 declare global {
   namespace NodeJS {
@@ -16,27 +17,56 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
 
   // Check if token is null or undefined
   if (token === null || token === undefined)
-    return res.json(new Error("Token does not exist."));
+    return res.json({ errorMessage: "Token does not exist.", data: false });
 
   // Verify JSONWebToken
   verify(token, process.env.JWS_TOKEN_SECRET as string, (err, user) => {
     // TODO: Add logic to remove token from DB so it can't be used if it already has expired
-    if (err) return res.json(new Error(err.message));
 
+    handleJWSTokenError(err, token, res);
     // Check token with the one in DB
     UserModel.findOne({ authToken: token })
-      .then((user) => {
-        return user !== null && user !== undefined
+      .then((userDB) => {
+        return userDB !== null && user !== undefined
           ? next()
-          : res.json(new Error("Unauthorized"));
+          : res.json({ errorMessage: "Unauthorized", data: false });
       })
       .catch((error) => {
-        return res.json(new Error("Internal server error"));
+        return res.json({
+          errorMessage: "Error while checking token",
+          data: false,
+        });
       });
-    return res.json(new Error("Unauthorized"));
-  });
 
-  return res.json(new Error("Unauthorized"));
+    // return res.json({ errorMessage: "Unknown error", data: false });
+  });
+  // return res.json(new Error("Unauthorized"));
 };
 
-export { authenticateToken };
+const handleJWSTokenError = (
+  err: VerifyErrors | null,
+  token: string,
+  res: Response
+) => {
+  if (err !== null) {
+    UserModel.updateOne(
+      { authToken: token },
+      { authToken: "" },
+      { upsert: false }
+    )
+      .then((updated) => {
+        return res.json({
+          errorMessage: "Error while removing the token.",
+          data: false,
+        });
+      })
+      .catch((error) => {
+        return res.json({
+          errorMessage: "Error while updating token",
+          data: false,
+        });
+      });
+  }
+};
+
+export { authenticateToken, handleJWSTokenError };

@@ -1,6 +1,8 @@
-import { UserModel, authenticate } from "../models/User";
+import { UserModel, authenticate, User } from "../models/User";
 import { NextFunction, Request, Response } from "express";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
+import { handleJWSTokenError } from "../helpers/auth-helpers/AuthenticateToken";
+
 // import { process } from "../helpers/auth-helpers/AuthenticateToken";
 
 export namespace UserController {
@@ -9,7 +11,7 @@ export namespace UserController {
       const users = await UserModel.find();
       return res.json(users);
     } catch (err) {
-      return res.status(500).json({
+      return res.json({
         message: "Error when getting list of all users.",
         error: err,
       });
@@ -33,20 +35,28 @@ export namespace UserController {
         console.log("saving user");
         user.save();
 
-        return res.status(201).json(user);
+        return res.json(user);
       } else {
         return res.json("Username is taken");
       }
     } catch (err) {
-      return res.status(500).json({
+      return res.json({
         message: "Error when creating user",
         error: err,
       });
     }
   }
 
-  export async function login(req: Request, res: Response, next: NextFunction) {
+  export async function login(req: Request, res: Response) {
     try {
+      if (
+        (req.body.username === null || req.body.username === undefined,
+        req.body.password === null || req.body.password === undefined)
+      ) {
+        res.json(new Error("Internal server error"));
+        return;
+      }
+
       const user = await authenticate(req.body.username, req.body.password);
       const jwsToken = sign(
         { username: user.username }, // provided username
@@ -66,11 +76,48 @@ export namespace UserController {
         lastName: user.lastName,
         jwsToken: jwsToken,
       };
-      res.status(200).json(jsonBody);
+      res.json(jsonBody);
     } catch (e) {
       console.error(e);
-      res.status(500).json(new Error("Internal server error"));
+      res.json(new Error("Internal server error"));
     }
+  }
+
+  export async function userFromToken(req: Request, res: Response) {
+    // Remove "Bearer" prefix as we need only token value
+    const token = req.headers["authorization"]?.split(" ")[1];
+
+    // Check if token is null or undefined
+    if (token === null || token === undefined)
+      return res.json({ errorMessage: "Token does not exist.", data: false });
+
+    // Verify JSONWebToken
+    verify(token, process.env.JWS_TOKEN_SECRET as string, (err, callback) => {
+      // TODO: Add logic to remove token from DB so it can't be used if it already has expired
+
+      handleJWSTokenError(err, token, res);
+      // Check token with the one in DB
+      UserModel.findOne({ authToken: token })
+        .then((userDB) => {
+          const user = userDB as User;
+
+          return res.json({
+            data: {
+              id: user._id,
+              username: user.username,
+              email: user.username,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            },
+          });
+        })
+        .catch((error) => {
+          return res.json({
+            errorMessage: "Error while checking token",
+            data: false,
+          });
+        });
+    });
   }
 
   export async function logout(
@@ -81,11 +128,11 @@ export namespace UserController {
     if (req.session) {
       try {
         // await req.session.destroy();
-        return res
-          .status(200)
-          .render("naive-response", { text: "Uspesno ste se odjavili" });
+        return res.render("naive-response", {
+          text: "Uspesno ste se odjavili",
+        });
       } catch (err) {
-        return res.status(500).json(err);
+        return res.json(err);
       }
     }
   }
