@@ -6,5 +6,4 @@
 
 # dependencies
 /node_modules
-public/images
-public/audio
+/dist
