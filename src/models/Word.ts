@@ -96,7 +96,7 @@ const wordSchema = new Schema<Word>({
   language: { type: String, required: true },
   //   isVerified: { type: Boolean, required: true },
   searchHits: { type: [] as SearchHit[], required: false },
-  translations: { type: [] as Translation[], required: false },
+  translations: { type: [] as Translation[], required: true },
 });
 
 const WordModel = model<Word>("Word", wordSchema);

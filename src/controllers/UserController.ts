@@ -2,7 +2,8 @@ import { UserModel, authenticate, User } from "../models/User";
 import { NextFunction, Request, Response } from "express";
 import { sign, verify } from "jsonwebtoken";
 import { handleJWSTokenError } from "../helpers/auth-helpers/AuthenticateToken";
-
+import { responseObject } from "../models/Response";
+import { ErrorCode } from "../helpers/ErrorCode";
 // import { process } from "../helpers/auth-helpers/AuthenticateToken";
 
 export namespace UserController {
@@ -53,7 +54,14 @@ export namespace UserController {
         (req.body.username === null || req.body.username === undefined,
         req.body.password === null || req.body.password === undefined)
       ) {
-        res.json(new Error("Internal server error"));
+        res.status(400).send(
+          responseObject({
+            data: null,
+            pagination: null,
+            errorMessage: "Username or password are undefined.",
+            errorCode: ErrorCode.undefinedData,
+          })
+        );
         return;
       }
 
@@ -76,10 +84,14 @@ export namespace UserController {
         lastName: user.lastName,
         jwsToken: jwsToken,
       };
-      res.json(jsonBody);
+      res.status(200).send(responseObject({ data: jsonBody }));
     } catch (e) {
       console.error(e);
-      res.json(new Error("Internal server error"));
+      res.status(500).send(
+        responseObject({
+          errorMessage: "Internal server error",
+        })
+      );
     }
   }
 
@@ -88,9 +100,16 @@ export namespace UserController {
     const token = req.headers["authorization"]?.split(" ")[1];
 
     // Check if token is null or undefined
-    if (token === null || token === undefined)
-      return res.json({ errorMessage: "Token does not exist.", data: false });
-
+    if (token === null || token === undefined) {
+      res.status(400).send(
+        responseObject({
+          data: null,
+          errorCode: ErrorCode.undefinedData,
+          errorMessage: "Token has no valid value.",
+        })
+      );
+      return;
+    }
     // Verify JSONWebToken
     verify(token, process.env.JWS_TOKEN_SECRET as string, (err, callback) => {
       handleJWSTokenError(err, token, res);
@@ -99,40 +118,28 @@ export namespace UserController {
         .then((userDB) => {
           const user = userDB as User;
 
-          return res.json({
-            data: {
-              id: user._id,
-              username: user.username,
-              email: user.username,
-              firstName: user.firstName,
-              lastName: user.lastName,
-            },
-          });
+          return res.json(
+            responseObject({
+              data: {
+                id: user._id,
+                username: user.username,
+                email: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                jwsToken: token,
+              },
+            })
+          );
         })
         .catch((error) => {
-          return res.json({
-            errorMessage: "Error while checking token",
-            data: false,
-          });
+          return res.json(
+            responseObject({
+              errorMessage: "Error while checking token",
+              data: null,
+            })
+          );
         });
     });
-  }
-
-  export async function logout(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    if (req.session) {
-      try {
-        // await req.session.destroy();
-        return res.render("naive-response", {
-          text: "Uspesno ste se odjavili",
-        });
-      } catch (err) {
-        return res.json(err);
-      }
-    }
   }
 }
 

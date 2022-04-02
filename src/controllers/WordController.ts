@@ -34,7 +34,7 @@ export namespace WordController {
         .limit(pageSize);
       res.json({
         pagination,
-        words,
+        data: words,
       });
     } catch (e) {
       console.error(e);

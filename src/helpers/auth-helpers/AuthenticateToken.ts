@@ -1,7 +1,9 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { JwtPayload, verify, VerifyErrors } from "jsonwebtoken";
 import { NIL } from "uuid";
+import { responseObject } from "../../models/Response";
 import { User, UserModel } from "../../models/User";
+import { ErrorCode } from "../ErrorCode";
 
 declare global {
   namespace NodeJS {
@@ -55,16 +57,17 @@ const handleJWSTokenError = (
       { upsert: false }
     )
       .then((updated) => {
-        return res.json({
-          errorMessage: "Error while removing the token.",
-          data: false,
-        });
+        res.status(403).send(
+          responseObject({
+            errorMessage: "Token expired.",
+            errorCode: ErrorCode.expiredData,
+          })
+        );
       })
       .catch((error) => {
-        return res.json({
-          errorMessage: "Error while updating token",
-          data: false,
-        });
+        res
+          .status(400)
+          .send(responseObject({ errorMessage: "Internal server error" }));
       });
   }
 };
