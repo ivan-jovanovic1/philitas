@@ -12,6 +12,7 @@ import {
 } from "../scrape/termania/TermaniaModels";
 import { ObjectId } from "mongoose";
 import { responseObject } from "../models/Response";
+import { ErrorCode } from "../helpers/ErrorCode";
 export namespace WordController {
   /**
    * Returns a list of words based on page and page size.
@@ -99,7 +100,16 @@ export namespace WordController {
 
     await scrapeData(res, word, page);
     const fromDB = await retrieveFromDB(req, word);
-    res.status(200).send(responseObject({ data: fromDB }));
+    if (fromDB !== null) res.status(200).send(responseObject({ data: fromDB }));
+    else
+      res
+        .status(404)
+        .send(
+          responseObject({
+            errorMessage: "Not found",
+            errorCode: ErrorCode.notFoundData,
+          })
+        );
   }
 
   async function addWordIdToCurrentUser(req: Request, word: string) {
