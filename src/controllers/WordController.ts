@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
 import { WordModel, Word, updateSearchHits } from "../models/Word";
-import { UserModel, User } from "../models/User";
-import { verify } from "jsonwebtoken";
+import { UserModel } from "../models/User";
 import Translate from "../helpers/Translate";
 import { Pagination, Page } from "../models/Pagination";
 import { ObjectID } from "mongodb";
 
-import { ResponseWithPagination } from "../scrape/termania/TermaniaModels";
+import {
+  ResponseWithPagination,
+  TermaniaSectionResults,
+} from "../scrape/termania/TermaniaModels";
 import { ObjectId } from "mongoose";
 import { responseObject } from "../models/Response";
 export namespace WordController {
@@ -88,19 +90,22 @@ export namespace WordController {
     const page = Page.normalizedPage(req.params.page);
     const word = req.params.word;
 
-    await addWordIdToCurrentUser(req, word);
+    const resultDB = await retrieveFromDB(req, word);
 
-    const resultDB = await retrieveFromDB(word);
+    if (resultDB !== null) {
+      res.status(200).send(responseObject({ data: resultDB }));
+      return;
+    }
 
-    if (resultDB === null) {
-      await scrapeData(word, page);
-      res.json(await retrieveFromDB(word));
-    } else res.json(resultDB);
+    await scrapeData(res, word, page);
+    const fromDB = await retrieveFromDB(req, word);
+    res.status(200).send(responseObject({ data: fromDB }));
   }
 
   async function addWordIdToCurrentUser(req: Request, word: string) {
     const token = req.headers["authorization"]?.split(" ")[1];
-    if (token === undefined) return;
+
+    if (token === undefined || token === null) return;
 
     await UserModel.updateOne(
       { authToken: token },
@@ -114,9 +119,9 @@ export namespace WordController {
    * @param word The word from the query.
    * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
    */
-  async function retrieveFromDB(word: string) {
+  async function retrieveFromDB(req: Request, word: string) {
     try {
-      const wordDB = await wordFromDB(word);
+      const wordDB = await wordFromDB(req, word);
 
       if (wordDB !== null) {
         await WordModel.updateOne(
@@ -140,7 +145,7 @@ export namespace WordController {
    * @param word The word from query.
    * @param page The selected page.
    */
-  async function scrapeData(word: string, page: number) {
+  async function scrapeData(res: Response, word: string, page: number) {
     const results: ResponseWithPagination[] = [];
     try {
       results.push(await scrapeTermania(word, page));
@@ -162,13 +167,12 @@ export namespace WordController {
 
         results.push(Helpers.responseWithoutSectionOthers(currentResult));
         i++;
-        if (i > 10) break;
+        if (i > 2) break;
       } catch (e) {
         console.error(e);
         break;
       }
     }
-    // response.json(results);
 
     await saveWordsToDB(results);
   }
@@ -178,10 +182,13 @@ export namespace WordController {
    * @param word A word from query.
    * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
    */
-  async function wordFromDB(word: string) {
+  async function wordFromDB(req: Request, word: string) {
     try {
       const value = await WordModel.findOne({ word: { $regex: word } });
-      if (value !== null) return value as Word;
+      if (value !== null) {
+        addWordIdToCurrentUser(req, value._id);
+      }
+      return value as Word;
       return null;
     } catch (e) {
       console.error(e);
@@ -221,6 +228,7 @@ export namespace WordController {
             termaniaWord.word,
             termaniaWord.language
           );
+
           if (translation !== null) {
             word.translations.push(translation);
           }
