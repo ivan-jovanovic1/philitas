@@ -142,5 +142,3 @@ export namespace UserController {
     });
   }
 }
-
-export default UserController;

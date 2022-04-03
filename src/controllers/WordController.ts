@@ -5,8 +5,11 @@ import { UserModel, User } from "../models/User";
 import { verify } from "jsonwebtoken";
 import Translate from "../helpers/Translate";
 import { Pagination, Page } from "../models/Pagination";
+import { ObjectID } from "mongodb";
 
 import { ResponseWithPagination } from "../scrape/termania/TermaniaModels";
+import { ObjectId } from "mongoose";
+import { responseObject } from "../models/Response";
 export namespace WordController {
   /**
    * Returns a list of words based on page and page size.
@@ -38,6 +41,41 @@ export namespace WordController {
       });
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  export async function singleFromId(req: Request, res: Response) {
+    const wordId = req.params.id;
+
+    if (wordId == null || undefined || !wordId.match(/^[0-9a-fA-F]{24}$/)) {
+      res.status(400).json(responseObject({ errorMessage: "Invalid id." }));
+      return;
+    }
+
+    const objectId = new ObjectID(wordId);
+
+    try {
+      const wordDB = await wordFromId(objectId);
+
+      if (wordDB !== null) {
+        await WordModel.updateOne(
+          { _id: objectId },
+          {
+            searchHits: updateSearchHits(wordDB),
+          },
+          { upsert: false }
+        );
+
+        res.status(200).send(responseObject({ data: wordDB }));
+      } else {
+        res
+          .status(404)
+          .send(responseObject({ errorMessage: "Not found in DB." }));
+      }
+    } catch (e) {
+      res
+        .status(500)
+        .send(responseObject({ errorMessage: "Internal server error." }));
     }
   }
 
@@ -124,7 +162,6 @@ export namespace WordController {
 
         results.push(Helpers.responseWithoutSectionOthers(currentResult));
         i++;
-        console.log(`Next page: ${i}`);
         if (i > 10) break;
       } catch (e) {
         console.error(e);
@@ -144,6 +181,17 @@ export namespace WordController {
   async function wordFromDB(word: string) {
     try {
       const value = await WordModel.findOne({ word: { $regex: word } });
+      if (value !== null) return value as Word;
+      return null;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async function wordFromId(id: ObjectID) {
+    try {
+      const value = await WordModel.findOne({ _id: new ObjectID(id) });
       if (value !== null) return value as Word;
       return null;
     } catch (e) {
