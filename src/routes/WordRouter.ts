@@ -4,7 +4,7 @@ import { WordController } from "../controllers/WordController";
 const WordRouter = Router();
 
 namespace Route {
-  export const list = "/list";
+  export const list = "/list/all";
   export const word = "/:word";
   export const wordId = "/byId/:id";
 }
