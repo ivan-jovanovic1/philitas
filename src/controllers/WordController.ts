@@ -60,16 +60,26 @@ export namespace WordController {
     const token = req.headers["authorization"]?.split(" ")[1];
 
     if (token === undefined || token === null) {
-      return res.status(400).send(
+      return res.status(401).send(
         responseObject({
           data: false,
           errorMessage: "Token not valid.",
-          errorCode: 400,
+          errorCode: 401,
         })
       );
     }
 
     const user = (await UserModel.findOne({ authToken: token })) as User;
+
+    if (user === undefined || user === null) {
+      return res.status(401).send(
+        responseObject({
+          data: false,
+          errorMessage: "Token not valid.",
+          errorCode: 401,
+        })
+      );
+    }
 
     const filtered = user.favoriteWordIds.filter(
       (value) => ObjectID.isValid(value) && value.length > 10
