@@ -5,15 +5,13 @@ import { UserModel } from "../models/User";
 import Translate from "../helpers/Translate";
 import { Pagination, Page } from "../models/Pagination";
 import { ObjectID } from "mongodb";
-
-import {
-  ResponseWithPagination,
-  TermaniaSectionResults,
-} from "../scrape/termania/TermaniaModels";
-import { ObjectId } from "mongoose";
+import { ResponseWithPagination } from "../scrape/termania/TermaniaModels";
 import { responseObject } from "../models/Response";
 import { ErrorCode } from "../helpers/ErrorCode";
 export namespace WordController {
+  export async function search(req: Request, res: Response) {
+    return null;
+  }
   /**
    * Returns a list of words based on page and page size.
    * The words are sorted by alphabet order.
@@ -102,16 +100,20 @@ export namespace WordController {
     const fromDB = await retrieveFromDB(req, word);
     if (fromDB !== null) res.status(200).send(responseObject({ data: fromDB }));
     else
-      res
-        .status(404)
-        .send(
-          responseObject({
-            errorMessage: "Not found",
-            errorCode: ErrorCode.notFoundData,
-          })
-        );
+      res.status(404).send(
+        responseObject({
+          errorMessage: "Not found",
+          errorCode: ErrorCode.notFoundData,
+        })
+      );
   }
 
+  /**
+   * Adds searched word to the current user in the database.
+   *
+   * @param req The request.
+   * @param word The word
+   */
   async function addWordIdToCurrentUser(req: Request, word: string) {
     const token = req.headers["authorization"]?.split(" ")[1];
 
@@ -124,7 +126,7 @@ export namespace WordController {
   }
 
   /**
-   * Tries to retrieve the word from DB.
+   * Tries to retrieve the word from the database.
    *
    * @param word The word from the query.
    * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
@@ -197,8 +199,8 @@ export namespace WordController {
       const value = await WordModel.findOne({ word: { $regex: word } });
       if (value !== null) {
         addWordIdToCurrentUser(req, value._id);
+        return value as Word;
       }
-      return value as Word;
       return null;
     } catch (e) {
       console.error(e);
