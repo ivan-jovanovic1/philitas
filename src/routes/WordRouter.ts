@@ -12,6 +12,16 @@ namespace Route {
 }
 
 async function methodFromRoute(req: Request, res: Response) {
+  if (req.url.includes(Route.favorites)) {
+    if (req.method === "GET") {
+      return WordController.favoriteList(req, res);
+    }
+
+    if (req.method === "POST") {
+      return WordController.addFavoriteWordIdToCurrentUser(req, res);
+    }
+  }
+
   if (req.route.path === Route.list) {
     return WordController.list(req, res);
   }
@@ -24,23 +34,13 @@ async function methodFromRoute(req: Request, res: Response) {
     return WordController.singleFromId(req, res);
   }
 
-  if (req.route.path == Route.favorites) {
-    if (req.method === "GET") {
-      return WordController.favoriteList(req, res);
-    }
-
-    if (req.method === "POST") {
-      return WordController.addFavoriteWordIdToCurrentUser(req, res);
-    }
-  }
-
   return res.status(404).send({ errorMessage: "Page not found" });
 }
 
 WordRouter.get(Route.list, methodFromRoute);
 WordRouter.get(Route.word, methodFromRoute);
 WordRouter.get(Route.wordId, methodFromRoute);
-WordRouter.get(Route.favorites);
+WordRouter.get(Route.favorites, methodFromRoute);
 
 WordRouter.post(Route.favorites, json(), methodFromRoute);
 
