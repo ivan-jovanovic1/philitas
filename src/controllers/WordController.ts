@@ -63,7 +63,7 @@ export namespace WordController {
       return res.status(400).send(
         responseObject({
           data: false,
-          errorMessage: "Token or wordId not valid.",
+          errorMessage: "Token not valid.",
           errorCode: 400,
         })
       );
@@ -71,12 +71,26 @@ export namespace WordController {
 
     const user = (await UserModel.findOne({ authToken: token })) as User;
 
+    const filtered = user.favoriteWordIds.filter(
+      (value) => ObjectID.isValid(value) && value.length > 10
+    );
+
+    if (filtered.length === 0) {
+      return res.status(400).send(
+        responseObject({
+          data: false,
+          errorMessage: "User dont have favorite words.",
+          errorCode: 400,
+        })
+      );
+    }
+
     const pagination: Pagination = {
       currentPage: page,
       allPages: Math.ceil(
         Number(
           await WordModel.collection.countDocuments({
-            _id: { $in: user.favoriteWordIds },
+            _id: { $in: filtered },
           })
         ) / pageSize
       ),
@@ -84,7 +98,7 @@ export namespace WordController {
     };
 
     try {
-      const words = await WordModel.find({ _id: { $in: user.favoriteWordIds } })
+      const words = await WordModel.find({ _id: { $in: filtered } })
         .sort({ mainLanguge: -1, word: 1 })
         .skip(Page.beginAt(page, pageSize))
         .limit(pageSize);
