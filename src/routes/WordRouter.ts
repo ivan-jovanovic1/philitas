@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { WordController } from "../controllers/WordController";
+import { json } from "body-parser";
 
 const WordRouter = Router();
 
@@ -7,22 +8,24 @@ namespace Route {
   export const list = "/list/all";
   export const word = "/:word";
   export const wordId = "/byId/:id";
+  export const wordIdToFavorites = "/favorites";
 }
 
 async function methodFromRoute(req: Request, res: Response) {
   if (req.route.path === Route.list) {
-    WordController.list(req, res);
-    return;
+    return WordController.list(req, res);
   }
 
   if (req.route.path === Route.word) {
-    WordController.singleResult(req, res);
-    return;
+    return WordController.singleResult(req, res);
   }
 
   if (req.route.path == Route.wordId) {
-    WordController.singleFromId(req, res);
-    return;
+    return WordController.singleFromId(req, res);
+  }
+
+  if (req.route.path == Route.wordIdToFavorites) {
+    return WordController.addFavoriteWordIdToCurrentUser(req, res);
   }
 
   res.status(404).send({ errorMessage: "Page not found" });
@@ -31,5 +34,7 @@ async function methodFromRoute(req: Request, res: Response) {
 WordRouter.get(Route.list, methodFromRoute);
 WordRouter.get(Route.word, methodFromRoute);
 WordRouter.get(Route.wordId, methodFromRoute);
+
+WordRouter.post(Route.wordIdToFavorites, json(), methodFromRoute);
 
 export default WordRouter;

@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
+import { urlToHttpOptions } from "url";
 
 declare module "express-session" {
   interface SessionData {
@@ -22,6 +23,7 @@ let userSchema = new Schema<User>({
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
   wordIds: { type: [] as String[], required: false },
+  favoriteWordIds: { type: [] as String[], required: false },
 });
 
 class User {
@@ -34,6 +36,7 @@ class User {
   firstName?: string;
   lastName?: string;
   wordIds: string[];
+  favoriteWordIds: string[];
 
   constructor(
     username: string,
@@ -50,6 +53,7 @@ class User {
     this.firstName = firstName;
     this.lastName = lastName;
     this.wordIds = [];
+    this.favoriteWordIds = [];
   }
 }
 
@@ -63,6 +67,7 @@ const authenticate = (username: string, password: string) => {
         email: string;
         isVerified: boolean;
         wordIds: string[];
+        favoriteWordIds: string[];
         firstName: string;
         lastName: string;
       }) => void,
@@ -91,6 +96,7 @@ const authenticate = (username: string, password: string) => {
                 email: user!.email,
                 isVerified: user!.isVerified,
                 wordIds: user!.wordIds,
+                favoriteWordIds: user!.favoriteWordIds,
                 firstName: user?.firstName !== undefined ? user?.firstName : "",
                 lastName: user?.lastName !== undefined ? user?.lastName : "",
               });

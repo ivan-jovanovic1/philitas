@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
 import { WordModel, Word, updateSearchHits } from "../models/Word";
-import { UserModel } from "../models/User";
+import { User, UserModel } from "../models/User";
 import Translate from "../helpers/Translate";
 import { Pagination, Page } from "../models/Pagination";
 import { ObjectID } from "mongodb";
 import { ResponseWithPagination } from "../scrape/termania/TermaniaModels";
 import { responseObject } from "../models/Response";
 import { ErrorCode } from "../helpers/ErrorCode";
+
 export namespace WordController {
   export async function search(req: Request, res: Response) {
     return null;
@@ -106,6 +107,51 @@ export namespace WordController {
           errorCode: ErrorCode.notFoundData,
         })
       );
+  }
+
+  /**
+   * Adds word to the current user as favorite word in the database.
+   *
+   * @param req The request.
+   * @param res The response.
+   */
+  export async function addFavoriteWordIdToCurrentUser(
+    req: Request,
+    res: Response
+  ) {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    const wordId = req.body.id;
+
+    if (token === undefined || token === null || !ObjectID.isValid(wordId)) {
+      return res.status(400).send(
+        responseObject({
+          data: false,
+          errorMessage: "Token or wordId not valid.",
+          errorCode: 400,
+        })
+      );
+    }
+
+    try {
+      await UserModel.updateOne(
+        { authToken: token },
+        { $addToSet: { favoriteWordIds: wordId } }
+      );
+
+      res.status(200).send(
+        responseObject({
+          data: true,
+        })
+      );
+    } catch {
+      res.status(404).send(
+        responseObject({
+          errorMessage: "Unable to add to favorites.",
+          errorCode: ErrorCode.unableToAddToFavorites,
+          data: false,
+        })
+      );
+    }
   }
 
   /**
