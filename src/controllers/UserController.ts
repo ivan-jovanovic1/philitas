@@ -95,6 +95,33 @@ export namespace UserController {
     }
   }
 
+  /**
+   * Adds word to the current user as favorite word in the database.
+   *
+   * @param req The request.
+   * @param res The response.
+   */
+  export async function logout(req: Request, res: Response) {
+    const token = req.headers["authorization"]?.split(" ")[1];
+
+    try {
+      const user = (await UserModel.findOne({ authToken: token })) as User;
+      await UserModel.updateOne({ _id: user._id }, { authToken: undefined });
+      res.status(200).send(
+        responseObject({
+          data: true,
+        })
+      );
+    } catch {
+      res.status(500).send(
+        responseObject({
+          errorMessage: "Internal server error",
+          data: false,
+        })
+      );
+    }
+  }
+
   export async function userFromToken(req: Request, res: Response) {
     // Remove "Bearer" prefix as we need only token value
     const token = req.headers["authorization"]?.split(" ")[1];
