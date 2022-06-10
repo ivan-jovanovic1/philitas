@@ -46,6 +46,59 @@ export namespace WordController {
     }
   }
 
+  /**
+   * Returns a list of the user's favorite words based on page and page size.
+   * The words are sorted by alphabet order.
+   *
+   * @param req Request with page and pageSize parameters.
+   * @param res Response with pagination and the list of the words for the current page.
+   */
+  export async function favoriteList(req: Request, res: Response) {
+    const page = Page.normalizedPage(req.query.page);
+    const pageSize = Page.normalizedPageSize(req.query.pageSize);
+
+    const token = req.headers["authorization"]?.split(" ")[1];
+
+    if (token === undefined || token === null) {
+      return res.status(400).send(
+        responseObject({
+          data: false,
+          errorMessage: "Token or wordId not valid.",
+          errorCode: 400,
+        })
+      );
+    }
+
+    const user = (await UserModel.findOne({ authToken: token })) as User;
+
+    const pagination: Pagination = {
+      currentPage: page,
+      allPages: Math.ceil(
+        Number(
+          await WordModel.collection.countDocuments({
+            _id: { $in: user.favoriteWordIds },
+          })
+        ) / pageSize
+      ),
+      pageSize: pageSize,
+    };
+
+    try {
+      const words = await WordModel.find({ _id: { $in: user.favoriteWordIds } })
+        .sort({ mainLanguge: -1, word: 1 })
+        .skip(Page.beginAt(page, pageSize))
+        .limit(pageSize);
+      res.json(
+        responseObject({
+          data: words,
+          pagination: pagination,
+        })
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   export async function singleFromId(req: Request, res: Response) {
     const wordId = req.params.id;
 
