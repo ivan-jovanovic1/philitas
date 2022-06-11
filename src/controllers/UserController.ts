@@ -34,17 +34,48 @@ export namespace UserController {
       });
       if (!takenUsername) {
         console.log("saving user");
+        const jwsToken = sign(
+          { username: user.username }, // provided username
+          process.env.JWS_TOKEN_SECRET, // secret key
+          { expiresIn: "7d" } // options
+        );
+        user.authToken = jwsToken;
         user.save();
 
+        const userData = user as User;
+
+        await UserModel.updateOne(
+          { username: user.username },
+          { authToken: jwsToken }
+        );
+
+        return res.status(200).send(
+          responseObject({
+            data: {
+              id: userData._id,
+              username: userData.username,
+              email: userData.email,
+              jwsToken: userData.authToken,
+              firstName: user.firstName,
+              lastName: user.lastName,
+            },
+          })
+        );
         return res.json(user);
       } else {
-        return res.json("Username is taken");
+        return res.status(409).send(
+          responseObject({
+            errorMessage: "Username is taken",
+            errorCode: ErrorCode.takenUsername,
+          })
+        );
       }
     } catch (err) {
-      return res.json({
-        message: "Error when creating user",
-        error: err,
-      });
+      return res.status(500).send(
+        responseObject({
+          errorMessage: "Interal server error.",
+        })
+      );
     }
   }
 
@@ -78,11 +109,12 @@ export namespace UserController {
       );
 
       const jsonBody = {
+        id: user._id,
         username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        jwsToken: jwsToken,
+        authToken: jwsToken,
       };
       res.status(200).send(responseObject({ data: jsonBody }));
     } catch (e) {
@@ -96,7 +128,7 @@ export namespace UserController {
   }
 
   /**
-   * Adds word to the current user as favorite word in the database.
+   * Removes auth token from user document in the database.
    *
    * @param req The request.
    * @param res The response.
