@@ -58,6 +58,7 @@ export namespace UserController {
               jwsToken: userData.authToken,
               firstName: user.firstName,
               lastName: user.lastName,
+              favoriteWordIds: user.favoriteWordIds,
             },
           })
         );
@@ -115,6 +116,7 @@ export namespace UserController {
         firstName: user.firstName,
         lastName: user.lastName,
         authToken: jwsToken,
+        favoriteWordIds: user.favoriteWordIds,
       };
       res.status(200).send(responseObject({ data: jsonBody }));
     } catch (e) {
@@ -182,10 +184,11 @@ export namespace UserController {
               data: {
                 id: user._id,
                 username: user.username,
-                email: user.username,
+                email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                jwsToken: token,
+                authToken: token,
+                favoriteWordIds: user.favoriteWordIds,
               },
             })
           );
