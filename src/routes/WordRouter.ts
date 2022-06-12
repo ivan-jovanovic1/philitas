@@ -18,7 +18,11 @@ async function methodFromRoute(req: Request, res: Response) {
     }
 
     if (req.method === "POST") {
-      return WordController.addFavoriteWordIdToCurrentUser(req, res);
+      return WordController.updateFavoritesForUser(req, res, false);
+    }
+
+    if (req.method === "DELETE") {
+      return WordController.updateFavoritesForUser(req, res, true);
     }
   }
 
@@ -43,5 +47,6 @@ WordRouter.get(Route.wordId, methodFromRoute);
 WordRouter.get(Route.favorites, methodFromRoute);
 
 WordRouter.post(Route.favorites, json(), methodFromRoute);
+WordRouter.delete(Route.favorites, json(), methodFromRoute);
 
 export default WordRouter;

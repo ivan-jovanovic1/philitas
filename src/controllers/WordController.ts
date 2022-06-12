@@ -187,14 +187,16 @@ export namespace WordController {
   }
 
   /**
-   * Adds word to the current user as favorite word in the database.
+   * Adds or removes the word from favorites for the current user.
    *
    * @param req The request.
    * @param res The response.
+   * @param remove The flag which indicates that word should be removed.
    */
-  export async function addFavoriteWordIdToCurrentUser(
+  export async function updateFavoritesForUser(
     req: Request,
-    res: Response
+    res: Response,
+    remove: Boolean
   ) {
     const token = req.headers["authorization"]?.split(" ")[1];
     const wordId = req.body.id;
@@ -210,10 +212,17 @@ export namespace WordController {
     }
 
     try {
-      await UserModel.updateOne(
-        { authToken: token },
-        { $addToSet: { favoriteWordIds: wordId } }
-      );
+      if (remove) {
+        await UserModel.updateOne(
+          { authToken: token },
+          { $pull: { favoriteWordIds: wordId } }
+        );
+      } else {
+        await UserModel.updateOne(
+          { authToken: token },
+          { $addToSet: { favoriteWordIds: wordId } }
+        );
+      }
 
       res.status(200).send(
         responseObject({
