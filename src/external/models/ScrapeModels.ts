@@ -1,4 +1,4 @@
-import { Pagination } from "../../models/Pagination";
+import { Pagination } from "../../shared/Pagination";
 
 interface TermaniaSectionResults {
   section: string;

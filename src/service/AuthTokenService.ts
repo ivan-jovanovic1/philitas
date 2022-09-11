@@ -1,9 +1,9 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { JwtPayload, verify, VerifyErrors } from "jsonwebtoken";
 import { NIL } from "uuid";
-import { responseObject } from "../../models/Response";
-import { User, UserModel } from "../../models/User";
-import { ErrorCode } from "../ErrorCode";
+import { responseObject } from "../models/BaseResponse";
+import { User, UserModel } from "../models/User";
+import { ErrorCode } from "../models/ErrorCode";
 
 declare global {
   namespace NodeJS {

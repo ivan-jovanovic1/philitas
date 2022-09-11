@@ -1,4 +1,4 @@
-import { TermaniaWord } from "../scrape/termania/TermaniaModels";
+import { TermaniaWord } from "../external/models/ScrapeModels";
 import { Schema, model, CallbackError, SchemaType, Types } from "mongoose";
 
 class DictionaryExplanation {

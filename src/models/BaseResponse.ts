@@ -1,4 +1,4 @@
-import { Pagination } from "./Pagination";
+import { Pagination } from "../shared/Pagination";
 
 export const responseObject = (response: ResponseObject) => {
   return {

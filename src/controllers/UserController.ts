@@ -1,10 +1,9 @@
 import { UserModel, authenticate, User } from "../models/User";
 import { NextFunction, Request, Response } from "express";
 import { sign, verify } from "jsonwebtoken";
-import { handleJWSTokenError } from "../helpers/auth-helpers/AuthenticateToken";
-import { responseObject } from "../models/Response";
-import { ErrorCode } from "../helpers/ErrorCode";
-// import { process } from "../helpers/auth-helpers/AuthenticateToken";
+import { handleJWSTokenError } from "../service/AuthTokenService";
+import { responseObject } from "../models/BaseResponse";
+import { ErrorCode } from "../models/ErrorCode";
 
 export namespace UserController {
   export async function list(req: Request, res: Response) {

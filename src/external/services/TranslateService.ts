@@ -1,5 +1,5 @@
 import googleTranslate from "@iamtraction/google-translate";
-import { Translation } from "../models/Word";
+import { Translation } from "../../models/Word";
 
 /**
  * Free Google Translate from Github repository: https://github.com/iamtraction/google-translate

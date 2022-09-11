@@ -1,9 +1,8 @@
 import request from "request";
 import cheerio from "cheerio";
-import util from "util";
-import { Pagination } from "../../models/Pagination";
-import { TermaniaSectionResults, TermaniaWord } from "./TermaniaModels";
-import { removeDiacritics } from "../../helpers/RemoveDiactritis";
+import { Pagination } from "../../shared/Pagination";
+import { TermaniaSectionResults, TermaniaWord } from "../models/ScrapeModels";
+import { removeDiacritics } from "../../service/RemoveDiactritis";
 /**
  * Main function that scrapes data from termania.net.
  *

@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
-import { scrapeTermania } from "../scrape/termania/TermaniaScrape";
+import { scrapeTermania } from "../external/services/ScrapeService";
 import { WordModel, Word, updateSearchHits } from "../models/Word";
 import { User, UserModel } from "../models/User";
-import Translate from "../helpers/Translate";
-import { Pagination, Page } from "../models/Pagination";
+import Translate from "../external/services/TranslateService";
+import { Pagination, Page } from "../shared/Pagination";
 import { ObjectID } from "mongodb";
-import { ResponseWithPagination } from "../scrape/termania/TermaniaModels";
-import { responseObject } from "../models/Response";
-import { ErrorCode } from "../helpers/ErrorCode";
+import { ResponseWithPagination } from "../external/models/ScrapeModels";
+import { responseObject } from "../models/BaseResponse";
+import { ErrorCode } from "../models/ErrorCode";
 
 export namespace WordController {
   export async function search(req: Request, res: Response) {
