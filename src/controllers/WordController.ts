@@ -4,7 +4,7 @@ import { WordModel, Word, updateSearchHits } from "../models/Word";
 import { User, UserModel } from "../models/User";
 import Translate from "../external/services/TranslateService";
 import { Pagination, Page } from "../shared/Pagination";
-import { ObjectID } from "mongodb";
+import { ObjectId } from "mongodb";
 import { ResponseWithPagination } from "../external/models/ScrapeModels";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
@@ -125,7 +125,7 @@ export namespace WordController {
     }
 
     const filtered = user.favoriteWordIds.filter(
-      (value) => ObjectID.isValid(value) && value.length > 10
+      (value) => ObjectId.isValid(value) && value.length > 10
     );
 
     if (filtered.length === 0) {
@@ -174,7 +174,7 @@ export namespace WordController {
       return;
     }
 
-    const objectId = new ObjectID(wordId);
+    const objectId = new ObjectId(wordId);
 
     try {
       const wordDB = await wordFromId(objectId);
@@ -244,7 +244,7 @@ export namespace WordController {
     const token = req.headers["authorization"]?.split(" ")[1];
     const wordId = req.body.id;
 
-    if (token === undefined || token === null || !ObjectID.isValid(wordId)) {
+    if (token === undefined || token === null || !ObjectId.isValid(wordId)) {
       return res.status(400).send(
         responseObject({
           data: false,
@@ -373,7 +373,7 @@ export namespace WordController {
     try {
       const value = await WordModel.findOne({ word: { $regex: word } });
       if (value !== null) {
-        addWordIdToCurrentUser(req, value._id);
+        addWordIdToCurrentUser(req, value?._id.toString());
         return value as Word;
       }
       return null;
@@ -383,9 +383,9 @@ export namespace WordController {
     }
   }
 
-  async function wordFromId(id: ObjectID) {
+  async function wordFromId(id: ObjectId) {
     try {
-      const value = await WordModel.findOne({ _id: new ObjectID(id) });
+      const value = await WordModel.findOne({ _id: new ObjectId(id) });
       if (value !== null) return value as Word;
       return null;
     } catch (e) {

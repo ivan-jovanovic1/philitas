@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, SchemaDefinitionProperty } from "mongoose";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 import { urlToHttpOptions } from "url";
@@ -22,8 +22,8 @@ let userSchema = new Schema<User>({
   authToken: { type: String, required: false },
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
-  wordIds: { type: [] as String[], required: false },
-  favoriteWordIds: { type: [] as String[], required: false },
+  wordIds: { type: [String], required: false },
+  favoriteWordIds: { type: [String], required: false },
 });
 
 class User {

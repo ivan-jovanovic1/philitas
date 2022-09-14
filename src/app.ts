@@ -2,7 +2,7 @@ import Express, { Application, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-import mongoose from "mongoose";
+import mongoose, { ConnectOptions } from "mongoose";
 
 import cors from "cors";
 import dotenv from "dotenv";
@@ -18,15 +18,13 @@ declare var process: {
   };
 };
 
-const databaseOptions = {
-  useUnifiedTopology: true,
-  useNewUrlParser: true,
-};
-
 const app: Application = Express();
 dotenv.config();
 
-mongoose.connect(process.env.CONNECTION_STRING, databaseOptions);
+mongoose.connect(process.env.CONNECTION_STRING, {
+  useUnifiedTopology: true,
+  useNewUrlParser: true,
+} as ConnectOptions);
 mongoose.Promise = global.Promise;
 const db = mongoose.connection;
 
