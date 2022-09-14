@@ -37,11 +37,19 @@ export namespace WordController {
         .sort({ word: 1 })
         .skip(Page.beginAt(page, pageSize))
         .limit(pageSize);
-      res.json({
-        pagination,
-        data: words,
-      });
+      res.json(
+        responseObject({
+          data: words,
+          pagination: pagination,
+        })
+      );
     } catch (e) {
+      res.status(500).send(
+        responseObject({
+          errorMessage: "Internal server error.",
+          errorCode: 500,
+        })
+      );
       console.error(e);
     }
   }
