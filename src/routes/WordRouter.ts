@@ -6,6 +6,7 @@ const WordRouter = Router();
 
 namespace Route {
   export const list = "/list/all";
+  export const searchWord = "/search/:query";
   export const word = "/:word";
   export const wordId = "/byId/:id";
   export const favorites = "/favorites";
@@ -24,6 +25,10 @@ async function methodFromRoute(req: Request, res: Response) {
     if (req.method === "DELETE") {
       return WordController.updateFavoritesForUser(req, res, true);
     }
+  }
+
+  if (req.route.path === Route.searchWord) {
+    return WordController.search(req, res);
   }
 
   if (req.route.path === Route.list) {
@@ -45,6 +50,7 @@ WordRouter.get(Route.list, methodFromRoute);
 WordRouter.get(Route.word, methodFromRoute);
 WordRouter.get(Route.wordId, methodFromRoute);
 WordRouter.get(Route.favorites, methodFromRoute);
+WordRouter.get(Route.searchWord, methodFromRoute);
 
 WordRouter.post(Route.favorites, json(), methodFromRoute);
 WordRouter.delete(Route.favorites, json(), methodFromRoute);

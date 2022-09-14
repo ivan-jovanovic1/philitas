@@ -11,7 +11,42 @@ import { ErrorCode } from "../models/ErrorCode";
 
 export namespace WordController {
   export async function search(req: Request, res: Response) {
-    return null;
+    const param = req.params.query;
+    if (param === null || param === undefined || param === "") {
+      res.status(400).send(
+        responseObject({
+          errorCode: ErrorCode.undefinedData,
+          errorMessage: "Undefined query.",
+        })
+      );
+      return;
+    }
+
+    let word = await retrieveFromDB(req, param);
+    if (word == null) {
+      await scrapeData(res, param, 1);
+      word = await retrieveFromDB(req, param);
+    }
+
+    let words: Word[] = await WordModel.find({ word: { $regex: param } });
+    words = words.filter((obj) => {
+      if (word === null) return true;
+      return obj.word !== word.word;
+    });
+
+    if (word !== null) {
+      res.status(200).send(
+        responseObject({
+          data: [word].concat(words),
+        })
+      );
+    } else {
+      res.status(200).send(
+        responseObject({
+          data: words,
+        })
+      );
+    }
   }
   /**
    * Returns a list of words based on page and page size.
