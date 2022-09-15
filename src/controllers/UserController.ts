@@ -1,23 +1,11 @@
 import { UserModel, authenticate, User } from "../models/User";
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { sign, verify } from "jsonwebtoken";
 import { handleJWSTokenError } from "../service/AuthTokenService";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 
 export namespace UserController {
-  export async function list(req: Request, res: Response) {
-    try {
-      const users = await UserModel.find();
-      return res.json(users);
-    } catch (err) {
-      return res.json({
-        message: "Error when getting list of all users.",
-        error: err,
-      });
-    }
-  }
-
   export async function create(req: Request, res: Response) {
     const user = new UserModel({
       email: req.body.email,
