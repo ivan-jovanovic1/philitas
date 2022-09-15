@@ -1,6 +1,6 @@
 import { UserModel, authenticate, User } from "../models/User";
 import { Request, Response } from "express";
-import { sign, verify } from "jsonwebtoken";
+import { verify } from "jsonwebtoken";
 import { handleJWSTokenError } from "../service/AuthTokenService";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
@@ -51,8 +51,6 @@ export namespace UserController {
     if (!isString(req.body.username) || !isString(req.body.password)) {
       res.status(400).send(
         responseObject({
-          data: null,
-          pagination: null,
           errorMessage: "Username or password are undefined.",
           errorCode: ErrorCode.undefinedData,
         })
