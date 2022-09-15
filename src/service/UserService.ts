@@ -24,7 +24,7 @@ export namespace UserService {
     return user as User;
   }
 
-  export async function logUser(username: string, password: string) {
+  export async function loginUser(username: string, password: string) {
     try {
       const user = await authenticate(username, password);
       const jwsToken = await createJWSToken(username);

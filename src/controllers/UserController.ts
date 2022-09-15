@@ -1,4 +1,4 @@
-import { UserModel, authenticate, User } from "../models/User";
+import { UserModel, User } from "../models/User";
 import { Request, Response } from "express";
 import { verify } from "jsonwebtoken";
 import { handleJWSTokenError } from "../service/AuthTokenService";
@@ -58,7 +58,7 @@ export namespace UserController {
       return;
     }
 
-    const data = await UserService.logUser(
+    const data = await UserService.loginUser(
       req.body.username,
       req.body.password
     );
