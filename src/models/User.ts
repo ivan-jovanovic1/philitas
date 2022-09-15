@@ -2,15 +2,6 @@ import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
 
-declare module "express-session" {
-  interface SessionData {
-    user: {
-      id: string;
-      jwsToken: string;
-    };
-  }
-}
-
 // TODO: Check why isVerified doesn't work
 /// User schema and its corresponding interface.
 let userSchema = new Schema<User>({

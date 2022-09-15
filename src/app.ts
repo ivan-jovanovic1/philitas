@@ -1,10 +1,8 @@
 import Express, { Application, Request, Response, NextFunction } from "express";
-import session from "express-session";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import mongoose, { ConnectOptions } from "mongoose";
 
-import cors from "cors";
 import dotenv from "dotenv";
 
 import UserRouter from "./routes/UserRouter";
@@ -32,14 +30,6 @@ db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 app.use("/users", UserRouter);
 app.use("/words", WordRouter);
-
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET_KEY,
-    resave: false,
-    saveUninitialized: true,
-  })
-);
 
 app.set("json spaces", 1);
 
