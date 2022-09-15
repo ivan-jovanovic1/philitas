@@ -112,7 +112,7 @@ export namespace WordController {
       );
     }
 
-    const user = (await UserModel.findOne({ authToken: token })) as User;
+    const user = (await UserModel.findOne({ jwsToken: token })) as User;
 
     if (user === undefined || user === null) {
       return res.status(401).send(
@@ -257,12 +257,12 @@ export namespace WordController {
     try {
       if (remove) {
         await UserModel.updateOne(
-          { authToken: token },
+          { jwsToken: token },
           { $pull: { favoriteWordIds: wordId } }
         );
       } else {
         await UserModel.updateOne(
-          { authToken: token },
+          { jwsToken: token },
           { $addToSet: { favoriteWordIds: wordId } }
         );
       }
@@ -295,7 +295,7 @@ export namespace WordController {
     if (token === undefined || token === null) return;
 
     await UserModel.updateOne(
-      { authToken: token },
+      { jwsToken: token },
       { $addToSet: { wordIds: word } }
     );
   }

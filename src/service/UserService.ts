@@ -1,4 +1,4 @@
-import { User, UserModel } from "../models/User";
+import { User, UserModel, authenticate } from "../models/User";
 import { sign } from "jsonwebtoken";
 
 export namespace UserService {
@@ -19,9 +19,20 @@ export namespace UserService {
       password: requestBody.password,
     });
 
-    user.authToken = await createJWSToken(requestBody.username as string);
+    user.jwsToken = await createJWSToken(requestBody.username as string);
     await user.save();
     return user as User;
+  }
+
+  export async function logUser(username: string, password: string) {
+    try {
+      const user = await authenticate(username, password);
+      const jwsToken = await createJWSToken(username);
+      await UserModel.updateOne({ username: username }, { jwsToken: jwsToken });
+      return { user, jwsToken };
+    } catch {
+      return null;
+    }
   }
 
   async function createJWSToken(username: string) {

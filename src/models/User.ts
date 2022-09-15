@@ -1,7 +1,6 @@
-import { Schema, model, SchemaDefinitionProperty } from "mongoose";
+import { Schema, model } from "mongoose";
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
-import { urlToHttpOptions } from "url";
 
 declare module "express-session" {
   interface SessionData {
@@ -19,7 +18,7 @@ let userSchema = new Schema<User>({
   password: { type: String, required: true },
   email: { type: String, required: true },
   //   isVerified: { type: Boolean, required: true },
-  authToken: { type: String, required: false },
+  jwsToken: { type: String, required: false },
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
   wordIds: { type: [String], required: false },
@@ -32,7 +31,7 @@ class User {
   password: string;
   email: string;
   isVerified: boolean;
-  authToken?: string;
+  jwsToken?: string;
   firstName?: string;
   lastName?: string;
   wordIds: string[];

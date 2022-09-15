@@ -27,7 +27,7 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
 
     handleJWSTokenError(err, token, res);
     // Check token with the one in DB
-    UserModel.findOne({ authToken: token })
+    UserModel.findOne({ jwsToken: token })
       .then((userDB) => {
         return userDB !== null && user !== undefined
           ? next()
@@ -52,8 +52,8 @@ const handleJWSTokenError = (
 ) => {
   if (err !== null) {
     UserModel.updateOne(
-      { authToken: token },
-      { authToken: "" },
+      { jwsToken: token },
+      { jwsToken: "" },
       { upsert: false }
     )
       .then((updated) => {

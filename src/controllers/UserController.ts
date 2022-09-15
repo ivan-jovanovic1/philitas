@@ -5,6 +5,7 @@ import { handleJWSTokenError } from "../service/AuthTokenService";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 import { UserService } from "../service/UserService";
+import { isString } from "../shared/SharedHelpers";
 
 export namespace UserController {
   export async function create(req: Request, res: Response) {
@@ -21,7 +22,7 @@ export namespace UserController {
               id: user._id,
               username: user.username,
               email: user.email,
-              jwsToken: user.authToken,
+              jwsToken: user.jwsToken,
               firstName: user.firstName,
               lastName: user.lastName,
               favoriteWordIds: user.favoriteWordIds,
@@ -47,54 +48,41 @@ export namespace UserController {
   }
 
   export async function login(req: Request, res: Response) {
-    try {
-      if (
-        req.body.username === null ||
-        req.body.username === undefined ||
-        req.body.password === null ||
-        req.body.password === undefined
-      ) {
-        res.status(400).send(
-          responseObject({
-            data: null,
-            pagination: null,
-            errorMessage: "Username or password are undefined.",
-            errorCode: ErrorCode.undefinedData,
-          })
-        );
-        return;
-      }
-
-      const user = await authenticate(req.body.username, req.body.password);
-      const jwsToken = sign(
-        { username: user.username }, // provided username
-        process.env.JWS_TOKEN_SECRET, // secret key
-        { expiresIn: "7d" } // options
+    if (!isString(req.body.username) || !isString(req.body.password)) {
+      res.status(400).send(
+        responseObject({
+          data: null,
+          pagination: null,
+          errorMessage: "Username or password are undefined.",
+          errorCode: ErrorCode.undefinedData,
+        })
       );
+      return;
+    }
 
-      await UserModel.updateOne(
-        { username: req.body.username },
-        { authToken: jwsToken }
-      );
+    const data = await UserService.logUser(
+      req.body.username,
+      req.body.password
+    );
 
-      const jsonBody = {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        authToken: jwsToken,
-        favoriteWordIds: user.favoriteWordIds,
-      };
-      res.status(200).send(responseObject({ data: jsonBody }));
-    } catch (e) {
-      console.error(e);
+    if (data === null) {
       res.status(500).send(
         responseObject({
           errorMessage: "Internal server error",
         })
       );
+      return;
     }
+    const jsonBody = {
+      id: data.user._id,
+      username: data.user.username,
+      email: data.user.email,
+      firstName: data.user.firstName,
+      lastName: data.user.lastName,
+      jwsToken: data.jwsToken,
+      favoriteWordIds: data.user.favoriteWordIds,
+    };
+    res.status(200).send(responseObject({ data: jsonBody }));
   }
 
   /**
@@ -107,8 +95,8 @@ export namespace UserController {
     const token = req.headers["authorization"]?.split(" ")[1];
 
     try {
-      const user = (await UserModel.findOne({ authToken: token })) as User;
-      await UserModel.updateOne({ _id: user._id }, { authToken: undefined });
+      const user = (await UserModel.findOne({ jwsToken: token })) as User;
+      await UserModel.updateOne({ _id: user._id }, { jwsToken: undefined });
       res.status(200).send(
         responseObject({
           data: true,
@@ -143,7 +131,7 @@ export namespace UserController {
     verify(token, process.env.JWS_TOKEN_SECRET as string, (err, callback) => {
       handleJWSTokenError(err, token, res);
       // Check token with the one in DB
-      UserModel.findOne({ authToken: token })
+      UserModel.findOne({ jwsToken: token })
         .then((userDB) => {
           const user = userDB as User;
 
@@ -155,7 +143,7 @@ export namespace UserController {
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                authToken: token,
+                jwsToken: token,
                 favoriteWordIds: user.favoriteWordIds,
               },
             })
