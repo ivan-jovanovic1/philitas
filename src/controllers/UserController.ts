@@ -4,52 +4,30 @@ import { sign, verify } from "jsonwebtoken";
 import { handleJWSTokenError } from "../service/AuthTokenService";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
+import { UserService } from "../service/UserService";
 
 export namespace UserController {
   export async function create(req: Request, res: Response) {
-    const user = new UserModel({
-      email: req.body.email,
-      firstName: req.body.firstname,
-      lastName: req.body.lastname,
-      phoneNumber: req.body.phonenumber,
-      username: req.body.username,
-      password: req.body.password,
-    });
     try {
-      let takenUsername = await UserModel.findOne({
-        username: req.body.username,
-      });
-      if (!takenUsername) {
-        console.log("saving user");
-        const jwsToken = sign(
-          { username: user.username }, // provided username
-          process.env.JWS_TOKEN_SECRET, // secret key
-          { expiresIn: "7d" } // options
-        );
-        user.authToken = jwsToken;
-        user.save();
-
-        const userData = user as User;
-
-        await UserModel.updateOne(
-          { username: user.username },
-          { authToken: jwsToken }
-        );
+      const isTaken = await UserService.isUsernameTaken(
+        req.body.username as string
+      );
+      if (!isTaken) {
+        const user = await UserService.save(req.body);
 
         return res.status(200).send(
           responseObject({
             data: {
-              id: userData._id,
-              username: userData.username,
-              email: userData.email,
-              jwsToken: userData.authToken,
+              id: user._id,
+              username: user.username,
+              email: user.email,
+              jwsToken: user.authToken,
               firstName: user.firstName,
               lastName: user.lastName,
               favoriteWordIds: user.favoriteWordIds,
             },
           })
         );
-        return res.json(user);
       } else {
         return res.status(409).send(
           responseObject({
@@ -62,6 +40,7 @@ export namespace UserController {
       return res.status(500).send(
         responseObject({
           errorMessage: "Interal server error.",
+          errorCode: 500,
         })
       );
     }
@@ -70,8 +49,10 @@ export namespace UserController {
   export async function login(req: Request, res: Response) {
     try {
       if (
-        (req.body.username === null || req.body.username === undefined,
-        req.body.password === null || req.body.password === undefined)
+        req.body.username === null ||
+        req.body.username === undefined ||
+        req.body.password === null ||
+        req.body.password === undefined
       ) {
         res.status(400).send(
           responseObject({
