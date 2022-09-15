@@ -6,8 +6,7 @@ export namespace UserService {
     const user = await UserModel.findOne({
       username: username,
     });
-    const value = user !== null;
-    return value;
+    return user !== null;
   }
 
   export async function save(requestBody: any) {
