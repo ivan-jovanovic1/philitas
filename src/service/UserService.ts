@@ -57,7 +57,7 @@ export namespace UserService {
       return { statusCode: 200, response: { data: user } };
     } catch {
       return {
-        statusCode: 200,
+        statusCode: 500,
         response: { errorMessage: "Internal serve error.", errorCode: 500 },
       };
     }
