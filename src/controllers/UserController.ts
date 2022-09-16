@@ -115,46 +115,29 @@ export namespace UserController {
     const token = req.headers["authorization"]?.split(" ")[1];
 
     // Check if token is null or undefined
-    if (token === null || token === undefined) {
+    if (!isString(token)) {
       res.status(400).send(
         responseObject({
-          data: null,
           errorCode: ErrorCode.undefinedData,
-          errorMessage: "Token has no valid value.",
+          errorMessage: "Token's type must be string.",
         })
       );
       return;
     }
-    // Verify JSONWebToken
-    verify(token, process.env.JWS_TOKEN_SECRET as string, (err, callback) => {
-      handleJWSTokenError(err, token, res);
-      // Check token with the one in DB
-      UserModel.findOne({ jwsToken: token })
-        .then((userDB) => {
-          const user = userDB as User;
 
-          return res.json(
-            responseObject({
-              data: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                jwsToken: token,
-                favoriteWordIds: user.favoriteWordIds,
-              },
-            })
-          );
-        })
-        .catch((error) => {
-          return res.json(
-            responseObject({
-              errorMessage: "Error while checking token",
-              data: null,
-            })
-          );
-        });
-    });
+    const userResponse = await UserService.userFromToken(token!);
+    const data = userResponse.response.data;
+    const body = {
+      id: data._id,
+      username: data.username,
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      jwsToken: token,
+      favoriteWordIds: data.favoriteWordIds,
+    };
+    userResponse.response.data = body;
+
+    res.status(userResponse.statusCode).send(userResponse.response);
   }
 }

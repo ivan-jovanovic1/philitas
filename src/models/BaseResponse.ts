@@ -12,3 +12,8 @@ interface ResponseObject {
   errorMessage?: string | null;
   errorCode?: number | null;
 }
+
+export interface ResponseWithStatus {
+  response: ResponseObject;
+  statusCode: number;
+}
