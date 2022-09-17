@@ -13,8 +13,9 @@ import { isString } from "../shared/SharedHelpers";
 
 export namespace WordController {
   export async function search(req: Request, res: Response) {
-    const param = req.params.query;
-    if (param === null || param === undefined || param === "") {
+    const query = req.params.query;
+
+    if (!isString(query)) {
       res.status(400).send(
         responseObject({
           errorCode: ErrorCode.undefinedData,
@@ -24,22 +25,22 @@ export namespace WordController {
       return;
     }
 
-    let word = await retrieveFromDB(req, param);
-    if (word == null) {
-      await scrapeData(res, param, 1);
-      word = await retrieveFromDB(req, param);
+    let word = await WordService.wordFromDB(query);
+    if (word.statusCode !== 200) {
+      await scrapeData(res, query, 1);
+      word = await WordService.wordFromDB(query);
     }
 
-    let words: Word[] = await WordModel.find({ word: { $regex: param } });
+    let words: Word[] = await WordModel.find({ word: { $regex: query } });
     words = words.filter((obj) => {
       if (word === null) return true;
-      return obj.word !== word.word;
+      return obj.word !== word.response.data.word;
     });
 
-    if (word !== null) {
+    if (word.response.data !== null) {
       res.status(200).send(
         responseObject({
-          data: [word].concat(words),
+          data: [word.response.data as Word].concat(words),
         })
       );
     } else {
