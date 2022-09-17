@@ -1,16 +1,59 @@
 import request from "request";
 import cheerio from "cheerio";
 import { Pagination } from "../../shared/Pagination";
-import { TermaniaSectionResults, TermaniaWord } from "../models/ScrapeModels";
+import {
+  ResponseWithPagination,
+  TermaniaSectionResults,
+  TermaniaWord,
+} from "../models/ScrapeModels";
 import { removeDiacritics } from "../../service/RemoveDiactritis";
+
 /**
- * Main function that scrapes data from termania.net.
+ * Scrapes data from Termania.
+ *
+ * @param word The word from query.
+ * @param maxPages The max number of pages to be scrapped.
+ */
+export async function scrapeTermania(word: string, maxPages: number = 2) {
+  const results: ResponseWithPagination[] = [];
+  try {
+    results.push(await scrapeData(word, 1));
+  } catch (e) {
+    console.error(e);
+  }
+
+  let i = 0;
+
+  while (i < results.length) {
+    if (!Helpers.isNotLastPage(results[i].pagination)) break;
+    try {
+      const currentResult = await scrapeData(
+        word,
+        results[i].pagination.currentPage + 1
+      );
+
+      if (Helpers.isOnlySectionOthersInResponse(currentResult)) break;
+
+      results.push(Helpers.responseWithoutSectionOthers(currentResult));
+      i++;
+      if (i > maxPages) break;
+    } catch (e) {
+      console.error(e);
+      break;
+    }
+  }
+  return results;
+  // await saveWordsToDB(results);
+}
+
+/**
+ * Main function that scrapes data from Termania.
  *
  * @param word Query word.
  * @param page Current page
  * @returns Resolved promise of words with explanations if succeeds, rejected promise with error otherwise.
  */
-const scrapeTermania = (word: string, page: number = 1) => {
+const scrapeData = (word: string, page: number = 1) => {
   const url = `https://www.termania.net/iskanje?ld=58&ld=122&query=${word}&page=${page}&SearchIn=Linked`;
   return new Promise(
     (
@@ -307,4 +350,52 @@ const isTextElement = (element: any): element is cheerio.TextElement => {
   return element?.type === "text";
 };
 
-export { scrapeTermania };
+/*
+
+ * Helper functions for WordController.
+ */
+namespace Helpers {
+  /**
+   * @param pagination Pagination from the result.
+   * @returns `True` if `currentPage` is less than `allPages`, `false` otherwise.
+   */
+  export const isNotLastPage = (pagination: Pagination) => {
+    return pagination.currentPage < pagination.allPages;
+  };
+
+  /**
+   *
+   * @param currentResult The result from the response.
+   * @returns The result without section `others`.
+   */
+  export const responseWithoutSectionOthers = (
+    currentResult: ResponseWithPagination
+  ): ResponseWithPagination => {
+    return {
+      allSections: filterSectionOthers(currentResult),
+      pagination: currentResult.pagination,
+    };
+  };
+
+  /**
+   * @param currentResult The result from the response.
+   * @returns `main` and `translate` sections if they exist, an empty array otherwise.
+   */
+  export const filterSectionOthers = (
+    currentResult: ResponseWithPagination
+  ) => {
+    return currentResult.allSections.filter(
+      (element) => element.section !== "others"
+    );
+  };
+
+  /**
+   * @param currentResult The result from the response.
+   * @returns `True` if result has only section "others", `false` otherwise.
+   */
+  export const isOnlySectionOthersInResponse = (
+    currentResult: ResponseWithPagination
+  ) => {
+    return filterSectionOthers(currentResult).length === 0;
+  };
+}

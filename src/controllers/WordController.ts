@@ -27,7 +27,8 @@ export namespace WordController {
 
     let word = await WordService.wordFromDB(query);
     if (word.statusCode !== 200) {
-      await scrapeData(res, query, 1);
+      const data = await scrapeTermania(query, 2);
+      await saveWordsToDB(data);
       word = await WordService.wordFromDB(query);
     }
 
@@ -258,106 +259,6 @@ export namespace WordController {
     }
   }
 
-  /**
-   * Adds searched word to the current user in the database.
-   *
-   * @param req The request.
-   * @param word The word
-   */
-  async function addWordIdToCurrentUser(req: Request, word: string) {
-    const token = req.headers["authorization"]?.split(" ")[1];
-
-    if (token === undefined || token === null) return;
-
-    await UserModel.updateOne(
-      { jwsToken: token },
-      { $addToSet: { wordIds: word } }
-    );
-  }
-
-  /**
-   * Tries to retrieve the word from the database.
-   *
-   * @param word The word from the query.
-   * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
-   */
-  async function retrieveFromDB(req: Request, word: string) {
-    try {
-      const wordDB = await wordFromDB(req, word);
-
-      if (wordDB !== null) {
-        await WordModel.updateOne(
-          { word: word },
-          {
-            searchHits: updateSearchHits(wordDB),
-          },
-          { upsert: false }
-        );
-        return wordDB;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /**
-   * Scrapes data from Termania and saves it to DB.
-   *
-   * @param word The word from query.
-   * @param page The selected page.
-   */
-  async function scrapeData(res: Response, word: string, page: number) {
-    const results: ResponseWithPagination[] = [];
-    try {
-      results.push(await scrapeTermania(word, page));
-    } catch (e) {
-      console.error(e);
-    }
-
-    let i = 0;
-
-    while (i < results.length) {
-      if (!Helpers.isNotLastPage(results[i].pagination)) break;
-      try {
-        const currentResult = await scrapeTermania(
-          word,
-          results[i].pagination.currentPage + 1
-        );
-
-        if (Helpers.isOnlySectionOthersInResponse(currentResult)) break;
-
-        results.push(Helpers.responseWithoutSectionOthers(currentResult));
-        i++;
-        if (i > 2) break;
-      } catch (e) {
-        console.error(e);
-        break;
-      }
-    }
-
-    await saveWordsToDB(results);
-  }
-
-  /*
-   *
-   * @param word A word from query.
-   * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
-   */
-  async function wordFromDB(req: Request, word: string) {
-    try {
-      const value = await WordModel.findOne({ word: { $regex: word } });
-      if (value !== null) {
-        addWordIdToCurrentUser(req, value?._id.toString());
-        return value as Word;
-      }
-      return null;
-    } catch (e) {
-      console.error(e);
-      return null;
-    }
-  }
-
   async function wordFromId(id: ObjectId) {
     try {
       const value = await WordModel.findOne({ _id: new ObjectId(id) });
@@ -406,55 +307,6 @@ export namespace WordController {
       }
     }
   }
-}
-
-/**
- * Helper functions for WordController.
- */
-namespace Helpers {
-  /**
-   * @param pagination Pagination from the result.
-   * @returns `True` if `currentPage` is less than `allPages`, `false` otherwise.
-   */
-  export const isNotLastPage = (pagination: Pagination) => {
-    return pagination.currentPage < pagination.allPages;
-  };
-
-  /**
-   *
-   * @param currentResult The result from the response.
-   * @returns The result without section `others`.
-   */
-  export const responseWithoutSectionOthers = (
-    currentResult: ResponseWithPagination
-  ): ResponseWithPagination => {
-    return {
-      allSections: filterSectionOthers(currentResult),
-      pagination: currentResult.pagination,
-    };
-  };
-
-  /**
-   * @param currentResult The result from the response.
-   * @returns `main` and `translate` sections if they exist, an empty array otherwise.
-   */
-  export const filterSectionOthers = (
-    currentResult: ResponseWithPagination
-  ) => {
-    return currentResult.allSections.filter(
-      (element) => element.section !== "others"
-    );
-  };
-
-  /**
-   * @param currentResult The result from the response.
-   * @returns `True` if result has only section "others", `false` otherwise.
-   */
-  export const isOnlySectionOthersInResponse = (
-    currentResult: ResponseWithPagination
-  ) => {
-    return filterSectionOthers(currentResult).length === 0;
-  };
 }
 
 export default WordController;
