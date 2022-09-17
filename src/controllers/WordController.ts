@@ -116,9 +116,10 @@ export namespace WordController {
       );
     }
 
-    const user = (await UserModel.findOne({ jwsToken: token })) as User;
+    const userDB = await UserModel.findOne({ jwsToken: token });
+    const user = userDB as User;
 
-    if (user === undefined || user === null) {
+    if (userDB === null) {
       return res.status(401).send(
         responseObject({
           data: false,
