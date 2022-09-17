@@ -32,7 +32,6 @@ interface Translation {
 }
 
 class Word {
-  _id: string;
   word: string;
   language: string;
   dictionaryExplanations: DictionaryExplanation[];
@@ -40,7 +39,6 @@ class Word {
   translations: Translation[];
 
   constructor(termania: TermaniaWord) {
-    this._id = uuid();
     this.word = termania.word;
     this.dictionaryExplanations = [
       {
@@ -97,7 +95,6 @@ const wordSchema = new Schema<Word>({
     required: true,
   },
   language: { type: String, required: true },
-  //   isVerified: { type: Boolean, required: true },
   searchHits: { type: [] as SearchHit[], required: false },
   translations: { type: [] as Translation[], required: true },
 });
