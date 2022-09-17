@@ -204,42 +204,6 @@ export namespace WordController {
   }
 
   /**
-   *
-   * @param req The request with a word param.
-   * @param res The response with a single word.
-   */
-  export async function singleResult(req: Request, res: Response) {
-    const page = Page.normalizedPage(req.params.page);
-    const word = req.params.word;
-    const token = req.headers["authorization"]?.split(" ")[1];
-
-    const result = await WordService.wordFromDB(word);
-
-    // Respond whether word was found or internal error occurred.
-    if (result.statusCode === 200 || result.statusCode === 500) {
-      if ((isString(token), result.statusCode === 200)) {
-        await WordService.addWordIdToCurrentUser(
-          token!,
-          result.response.data._id
-        );
-      }
-      return res.status(result.statusCode).send(result.response);
-    }
-
-    await scrapeData(res, word, page);
-    const fromDB = await retrieveFromDB(req, word);
-
-    if (fromDB !== null) res.status(200).send(responseObject({ data: fromDB }));
-    else
-      res.status(404).send(
-        responseObject({
-          errorMessage: "Not found",
-          errorCode: ErrorCode.notFoundData,
-        })
-      );
-  }
-
-  /**
    * Adds or removes the word from favorites for the current user.
    *
    * @param req The request.
