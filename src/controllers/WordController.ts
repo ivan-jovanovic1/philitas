@@ -215,8 +215,9 @@ export namespace WordController {
 
     const result = await WordService.wordFromDB(word);
 
-    if (result.statusCode === 200) {
-      if (isString(token)) {
+    // Respond whether word was found or internal error occurred.
+    if (result.statusCode === 200 || result.statusCode === 500) {
+      if ((isString(token), result.statusCode === 200)) {
         await WordService.addWordIdToCurrentUser(
           token!,
           result.response.data._id
@@ -227,6 +228,7 @@ export namespace WordController {
 
     await scrapeData(res, word, page);
     const fromDB = await retrieveFromDB(req, word);
+
     if (fromDB !== null) res.status(200).send(responseObject({ data: fromDB }));
     else
       res.status(404).send(
