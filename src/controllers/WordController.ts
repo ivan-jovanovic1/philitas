@@ -8,6 +8,8 @@ import { ObjectId } from "mongodb";
 import { ResponseWithPagination } from "../external/models/ScrapeModels";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
+import { WordService } from "../service/WordService";
+import { isString } from "../shared/SharedHelpers";
 
 export namespace WordController {
   export async function search(req: Request, res: Response) {
@@ -209,12 +211,18 @@ export namespace WordController {
   export async function singleResult(req: Request, res: Response) {
     const page = Page.normalizedPage(req.params.page);
     const word = req.params.word;
+    const token = req.headers["authorization"]?.split(" ")[1];
 
-    const resultDB = await retrieveFromDB(req, word);
+    const result = await WordService.wordFromDB(word);
 
-    if (resultDB !== null) {
-      res.status(200).send(responseObject({ data: resultDB }));
-      return;
+    if (result.statusCode === 200) {
+      if (isString(token)) {
+        await WordService.addWordIdToCurrentUser(
+          token!,
+          result.response.data._id
+        );
+      }
+      return res.status(result.statusCode).send(result.response);
     }
 
     await scrapeData(res, word, page);
@@ -364,7 +372,7 @@ export namespace WordController {
     await saveWordsToDB(results);
   }
 
-  /**
+  /*
    *
    * @param word A word from query.
    * @returns `Promise<Word>` if found in DB, `Promise<null>` otherwise.
