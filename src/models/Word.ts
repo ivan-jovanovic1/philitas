@@ -1,5 +1,6 @@
 import { TermaniaWord } from "../external/models/ScrapeModels";
-import { Schema, model, CallbackError, SchemaType, Types } from "mongoose";
+import { Schema, model } from "mongoose";
+import { v4 as uuid } from "uuid";
 
 class DictionaryExplanation {
   explanations: string[];
@@ -31,6 +32,7 @@ interface Translation {
 }
 
 class Word {
+  _id: string;
   word: string;
   language: string;
   dictionaryExplanations: DictionaryExplanation[];
@@ -38,6 +40,7 @@ class Word {
   translations: Translation[];
 
   constructor(termania: TermaniaWord) {
+    this._id = uuid();
     this.word = termania.word;
     this.dictionaryExplanations = [
       {
@@ -101,4 +104,4 @@ const wordSchema = new Schema<Word>({
 
 const WordModel = model<Word>("Word", wordSchema);
 
-export { WordModel, Word, Translation, updateSearchHits };
+export { WordModel, Word, Translation, createSearchHit, updateSearchHits };
