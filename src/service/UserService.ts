@@ -1,7 +1,7 @@
 import { User, UserModel, authenticate } from "../models/User";
 import { sign } from "jsonwebtoken";
-import { verify, VerifyErrors } from "jsonwebtoken";
-import { responseObject, ResponseWithStatus } from "../models/BaseResponse";
+import { verify } from "jsonwebtoken";
+import { ResponseWithStatus } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 
 export namespace UserService {
@@ -28,39 +28,32 @@ export namespace UserService {
   }
 
   export async function loginUser(username: string, password: string) {
-    try {
-      const user = await authenticate(username, password);
-      const jwsToken = await createJWSToken(username);
-      await UserModel.updateOne({ username: username }, { jwsToken: jwsToken });
-      return { user, jwsToken };
-    } catch {
-      return null;
-    }
+    const user = await authenticate(username, password);
+    const jwsToken = await createJWSToken(username);
+    const result = await UserModel.updateOne(
+      { username: username },
+      { jwsToken: jwsToken }
+    );
+
+    return result.modifiedCount > 0 ? { user, jwsToken } : null;
   }
 
   export async function userFromToken(
     token: string
   ): Promise<ResponseWithStatus> {
-    try {
-      const isValid = await verifyJWSToken(token);
-      if (!isValid) {
-        await removeJWSTokenFromUser(token);
-        return {
-          statusCode: 403,
-          response: {
-            errorMessage: "Token expired.",
-            errorCode: ErrorCode.expiredData,
-          },
-        };
-      }
-      const user = (await UserModel.findOne({ jwsToken: token })) as User;
-      return { statusCode: 200, response: { data: user } };
-    } catch {
+    const isValid = await verifyJWSToken(token);
+    if (!isValid) {
+      await removeJWSTokenFromUser(token);
       return {
-        statusCode: 500,
-        response: { errorMessage: "Internal serve error.", errorCode: 500 },
+        statusCode: 403,
+        response: {
+          errorMessage: "Token expired.",
+          errorCode: ErrorCode.expiredData,
+        },
       };
     }
+    const user = (await UserModel.findOne({ jwsToken: token })) as User;
+    return { statusCode: 200, response: { data: user } };
   }
 
   async function removeJWSTokenFromUser(token: string) {
@@ -74,7 +67,7 @@ export namespace UserService {
   async function createJWSToken(username: string) {
     return sign(
       { username: username }, // provided username
-      process.env.JWS_TOKEN_SECRET, // secret key
+      process.env.JWS_TOKEN_SECRET!, // secret key
       { expiresIn: "7d" } // options
     );
   }

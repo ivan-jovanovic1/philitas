@@ -55,12 +55,31 @@ export namespace UserController {
       return;
     }
 
-    const data = await UserService.loginUser(
-      req.body.username,
-      req.body.password
-    );
+    try {
+      const data = await UserService.loginUser(
+        req.body.username,
+        req.body.password
+      );
 
-    if (data === null) {
+      if (!data) {
+        res.status(500).send(
+          responseObject({
+            errorMessage: "Internal server error",
+          })
+        );
+        return;
+      }
+      const jsonBody = {
+        id: data.user._id,
+        username: data.user.username,
+        email: data.user.email,
+        firstName: data.user.firstName,
+        lastName: data.user.lastName,
+        jwsToken: data.jwsToken,
+        favoriteWordIds: data.user.favoriteWordIds,
+      };
+      res.status(200).send(responseObject({ data: jsonBody }));
+    } catch {
       res.status(500).send(
         responseObject({
           errorMessage: "Internal server error",
@@ -68,16 +87,6 @@ export namespace UserController {
       );
       return;
     }
-    const jsonBody = {
-      id: data.user._id,
-      username: data.user.username,
-      email: data.user.email,
-      firstName: data.user.firstName,
-      lastName: data.user.lastName,
-      jwsToken: data.jwsToken,
-      favoriteWordIds: data.user.favoriteWordIds,
-    };
-    res.status(200).send(responseObject({ data: jsonBody }));
   }
 
   /**
