@@ -10,14 +10,7 @@ import { WordService } from "../service/WordService";
 import { FavoriteWordService } from "../service/FavoriteWordService";
 import { isString } from "../shared/SharedHelpers";
 import { WordHistoryService } from "../service/WordHistoryService";
-import {
-  isTokenNotValidResponse,
-  isTokenValid,
-} from "../service/TokenValidator";
-import { UserService } from "../service/UserService";
 
-import { IncomingHttpHeaders } from "http";
-import { WordViews } from "../models/WordViewsModel";
 import { WordViewsService } from "../service/WordViewsService";
 
 declare module "http" {
