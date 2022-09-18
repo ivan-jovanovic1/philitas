@@ -15,6 +15,13 @@ import {
 } from "../service/TokenValidator";
 import { UserService } from "../service/UserService";
 
+import { IncomingHttpHeaders } from "http";
+
+declare module "http" {
+  interface IncomingHttpHeaders {
+    "user-id"?: string;
+  }
+}
 export namespace WordController {
   export async function search(req: Request, res: Response) {
     const query = req.params.query;
@@ -107,42 +114,26 @@ export namespace WordController {
   export async function favoriteList(req: Request, res: Response) {
     const page = Page.normalizedPage(req.query.page);
     const pageSize = Page.normalizedPageSize(req.query.pageSize);
-    const token = req.headers["authorization"]?.split(" ")[1];
-    const tokenResponse = isTokenNotValidResponse(token);
 
-    if (tokenResponse) {
-      res.status(tokenResponse.statusCode).send(tokenResponse.response);
-      return;
-    }
+    const userId = req.headers["user-id"]; //?.split(" "[1]);
 
-    const user = await UserService.userFromToken(token!);
-
-    if (!user) {
+    if (!isString(userId)) {
       res.status(401).send(
         responseObject({
-          data: false,
-          errorMessage: "Token not valid.",
-          errorCode: 401,
+          errorCode: ErrorCode.undefinedData,
+          errorMessage: "Invalid user id header",
         })
       );
       return;
     }
 
-    const filtered = user.favoriteWordIds.filter(
-      (value) => ObjectId.isValid(value) && value.length > 10
-    );
-
     try {
       const pagination = await FavoriteWordService.pagination(
         page,
         pageSize,
-        filtered
+        userId!
       );
-      const words = await FavoriteWordService.wordList(
-        page,
-        pageSize,
-        filtered
-      );
+      const words = await FavoriteWordService.wordList(page, pageSize, userId!);
       res.json(
         responseObject({
           data: words,
@@ -150,6 +141,7 @@ export namespace WordController {
         })
       );
     } catch (e) {
+      console.error(e);
       res.status(500).send(
         responseObject({
           errorMessage: "Internal server error.",
@@ -202,15 +194,14 @@ export namespace WordController {
     res: Response,
     remove: Boolean
   ) {
-    const token = req.headers["authorization"]?.split(" ")[1];
+    const userId = req.headers["user-id"];
     const wordId = req.body.id;
-    const isValidToken = isTokenValid(token);
 
-    if (!isValidToken || !ObjectId.isValid(wordId)) {
+    if (!isString(userId) || !ObjectId.isValid(wordId)) {
       res.status(401).send(
         responseObject({
           data: false,
-          errorMessage: `${isValidToken ? "WordId" : "Token"} not valid.`,
+          errorMessage: `${isString(userId) ? "WordId" : "UserId"} not valid.`,
           errorCode: 401,
         })
       );
@@ -218,7 +209,7 @@ export namespace WordController {
     }
 
     try {
-      await FavoriteWordService.update(wordId as string, remove, token!);
+      await FavoriteWordService.update(wordId as string, remove, userId!);
       res.status(200).send(
         responseObject({
           data: true,

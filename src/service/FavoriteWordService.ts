@@ -1,20 +1,20 @@
-import { ObjectId } from "mongoose";
 import { UserModel } from "../models/User";
 import { WordModel, Word } from "../models/Word";
+import { UserFavorites, UserFavoritesModel } from "../models/UserFavorites";
 import { Page, Pagination } from "../shared/Pagination";
 
 export namespace FavoriteWordService {
   export const pagination = async (
     page: number,
     pageSize: number,
-    wordIds: string[]
+    userId: string
   ): Promise<Pagination> => {
     return {
       currentPage: page,
       allPages: Math.ceil(
         Number(
-          await WordModel.collection.countDocuments({
-            _id: { $in: wordIds },
+          await UserFavoritesModel.collection.countDocuments({
+            _id: userId,
           })
         ) / pageSize
       ),
@@ -25,29 +25,53 @@ export namespace FavoriteWordService {
   export const wordList = async (
     currentPage: number,
     pageSize: number,
-    wordIds: string[]
+    userId: string
   ) => {
-    return (await WordModel.find({ _id: { $in: wordIds } })
-      .sort({ mainLanguge: -1, word: 1 })
+    const favorites = (await UserFavoritesModel.findOne({ userId: userId })
       .skip(Page.beginAt(currentPage, pageSize))
-      .limit(pageSize)) as Word[];
+      .limit(pageSize)) as UserFavorites;
+
+    if (favorites.wordIds.length === 0) {
+      return [];
+    }
+
+    return (await WordModel.find({
+      _id: { $in: favorites.wordIds },
+    }).sort({ mainLanguge: -1, word: 1 })) as Word[];
   };
 
   export const update = async (
     wordId: string,
     remove: Boolean,
-    token: string
+    userId: string
   ) => {
     if (remove) {
-      await UserModel.updateOne(
-        { jwsToken: token },
-        { $pull: { favoriteWordIds: wordId } }
+      await UserFavoritesModel.updateOne(
+        { userId: userId },
+        { $pull: { wordIds: wordId } }
       );
     } else {
-      await UserModel.updateOne(
-        { jwsToken: token },
-        { $addToSet: { favoriteWordIds: wordId } }
-      );
+      const v = await UserFavoritesModel.findOne({ userId: userId });
+
+      if (!v) {
+        const modelDB = new UserFavoritesModel(
+          new UserFavorites(userId, [wordId])
+        );
+        await modelDB.save();
+      } else {
+        const value = await UserFavoritesModel.updateOne(
+          { userId: userId },
+          { $addToSet: { wordIds: wordId } }
+        );
+      }
     }
+  };
+
+  export const isFavorite = async (userId: string, wordId: string) => {
+    const word = await UserFavoritesModel.findOne({
+      userId: userId,
+      wordIds: wordId,
+    });
+    return word !== null;
   };
 }
