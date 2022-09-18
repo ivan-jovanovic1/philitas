@@ -1,7 +1,5 @@
 import { UserModel, User } from "../models/User";
 import { Request, Response } from "express";
-import { verify } from "jsonwebtoken";
-import { handleJWSTokenError } from "../service/AuthTokenService";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 import { UserService } from "../service/UserService";
