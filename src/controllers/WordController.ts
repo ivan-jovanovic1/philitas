@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
 import { scrapeTermania } from "../external/services/ScrapeService";
 import { WordModel, Word } from "../models/Word";
-import { User, UserModel } from "../models/User";
-import Translate from "../external/services/TranslateService";
-import { Pagination, Page } from "../shared/Pagination";
+import { Page } from "../shared/Pagination";
 import { ObjectId } from "mongodb";
-import { ResponseWithPagination } from "../external/models/ScrapeModels";
+import { TermaniaWord } from "../external/models/ScrapeModels";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 import { WordService } from "../service/WordService";
@@ -242,35 +240,14 @@ export namespace WordController {
    *
    * @param results Results from scrapping.
    */
-  async function saveWordsToDB(results: ResponseWithPagination[]) {
-    for (const result of results) {
-      for (const section of result.allSections) {
-        for (let termaniaWord of section.wordsWithExplanations) {
-          if (
-            termaniaWord.language !== "sl" &&
-            termaniaWord.explanations.length === 0
-          )
-            continue;
+  async function saveWordsToDB(results: TermaniaWord[]) {
+    for (const word of results) {
+      const wordModel = new WordModel(word);
 
-          let word = new Word(termaniaWord);
-
-          const translation = await Translate.englishSloveneInvertible(
-            termaniaWord.word,
-            termaniaWord.language
-          );
-
-          if (translation !== null) {
-            word.translations.push(translation);
-          }
-
-          const wordModel = new WordModel(word);
-
-          try {
-            await wordModel.save();
-          } catch (e) {
-            console.error(e);
-          }
-        }
+      try {
+        await wordModel.save();
+      } catch (e) {
+        console.error(e);
       }
     }
   }

@@ -7,6 +7,8 @@ import {
   TermaniaWord,
 } from "../models/ScrapeModels";
 import { removeDiacritics } from "../../service/RemoveDiactritis";
+import { inspect } from "util";
+import { val } from "cheerio/lib/api/attributes";
 
 /**
  * Scrapes data from Termania.
@@ -15,35 +17,43 @@ import { removeDiacritics } from "../../service/RemoveDiactritis";
  * @param maxPages The max number of pages to be scrapped.
  */
 export async function scrapeTermania(word: string, maxPages: number = 2) {
-  const results: ResponseWithPagination[] = [];
+  let allWords: TermaniaWord[] = [];
+  let paginations: Pagination[] = [];
   try {
-    results.push(await scrapeData(word, 1));
+    const result = await scrapeData(word, 1);
+    paginations.push(result.pagination);
+    for (const section of result.allSections) {
+      allWords = allWords.concat(section.wordsWithExplanations);
+    }
   } catch (e) {
     console.error(e);
   }
 
   let i = 0;
 
-  while (i < results.length) {
-    if (!Helpers.isNotLastPage(results[i].pagination)) break;
+  while (i < paginations.length) {
+    if (!Helpers.isNotLastPage(paginations[i])) break;
     try {
       const currentResult = await scrapeData(
         word,
-        results[i].pagination.currentPage + 1
+        paginations[i].currentPage + 1
       );
 
       if (Helpers.isOnlySectionOthersInResponse(currentResult)) break;
 
-      results.push(Helpers.responseWithoutSectionOthers(currentResult));
+      const mainAndTranslate = Helpers.filterSectionOthers(currentResult);
+      allWords = Helpers.merge(mainAndTranslate, allWords);
+      paginations.push(currentResult.pagination);
+
       i++;
-      if (i > maxPages) break;
+      if (i >= maxPages) break;
     } catch (e) {
       console.error(e);
       break;
     }
   }
-  return results;
-  // await saveWordsToDB(results);
+
+  return allWords;
 }
 
 /**
@@ -364,29 +374,22 @@ namespace Helpers {
   };
 
   /**
-   *
-   * @param currentResult The result from the response.
-   * @returns The result without section `others`.
-   */
-  export const responseWithoutSectionOthers = (
-    currentResult: ResponseWithPagination
-  ): ResponseWithPagination => {
-    return {
-      allSections: filterSectionOthers(currentResult),
-      pagination: currentResult.pagination,
-    };
-  };
-
-  /**
    * @param currentResult The result from the response.
    * @returns `main` and `translate` sections if they exist, an empty array otherwise.
    */
   export const filterSectionOthers = (
     currentResult: ResponseWithPagination
   ) => {
-    return currentResult.allSections.filter(
+    const sections = currentResult.allSections.filter(
       (element) => element.section !== "others"
     );
+
+    let words: TermaniaWord[] = [];
+    for (const section of sections) {
+      words = words.concat(section.wordsWithExplanations);
+    }
+
+    return words;
   };
 
   /**
@@ -397,5 +400,26 @@ namespace Helpers {
     currentResult: ResponseWithPagination
   ) => {
     return filterSectionOthers(currentResult).length === 0;
+  };
+
+  export const merge = (
+    words: TermaniaWord[],
+    allSectionsWords: TermaniaWord[]
+  ) => {
+    let all = [...allSectionsWords, ...words];
+    let dictionary: { [id: string]: TermaniaWord } = {};
+
+    for (const word of all) {
+      const key = word.dictionaryName + word.language + word.word;
+      if (Object.keys(dictionary).includes(key)) {
+        dictionary[key].explanations = dictionary[key].explanations.concat(
+          word.explanations
+        );
+      } else {
+        dictionary[key] = word;
+      }
+    }
+
+    return Object.values(dictionary);
   };
 }
