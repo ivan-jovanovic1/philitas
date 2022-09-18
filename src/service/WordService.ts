@@ -1,7 +1,5 @@
 import { UserModel } from "../models/User";
 import { WordModel, Word, createSearchHit } from "../models/Word";
-import { ResponseWithStatus } from "../models/BaseResponse";
-import { ErrorCode } from "../models/ErrorCode";
 import { ObjectId } from "mongodb";
 import { Page, Pagination } from "../shared/Pagination";
 
@@ -11,17 +9,9 @@ export namespace WordService {
    * @param word A word from query.
    * @returns `Promise<Word>` if found in DB, `Promise<Error>` otherwise.
    */
-  export async function wordFromDB(word: string): Promise<ResponseWithStatus> {
+  export async function wordFromDB(word: string): Promise<Word | null> {
     const resultDB = await WordModel.findOne({ word: { $regex: word } });
-    const isNull = resultDB === null;
-    return {
-      statusCode: isNull ? 404 : 200,
-      response: {
-        errorCode: isNull ? ErrorCode.notFoundData : null,
-        errorMessage: isNull ? "Not found in the database." : null,
-        data: isNull ? null : (resultDB as Word),
-      },
-    };
+    return resultDB === null ? null : (resultDB as Word);
   }
 
   export async function wordFromId(id: ObjectId) {
@@ -66,10 +56,10 @@ export namespace WordService {
     };
   }
 
-  export async function allWordsList(beginAt: number, pageSize: number) {
+  export async function allWordsList(beginAtPage: number, pageSize: number) {
     return (await WordModel.find()
       .sort({ word: 1 })
-      .skip(Page.beginAt(beginAt, pageSize))
+      .skip(Page.beginAt(beginAtPage, pageSize))
       .limit(pageSize)) as Word[];
   }
 

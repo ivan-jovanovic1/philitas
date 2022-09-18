@@ -1,7 +1,6 @@
 import { User, UserModel, authenticate } from "../models/User";
 import { sign } from "jsonwebtoken";
 import { verify } from "jsonwebtoken";
-import { ResponseWithStatus } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 
 export namespace UserService {
@@ -58,7 +57,6 @@ export namespace UserService {
     const userDB = await UserModel.findOne({ jwsToken: token });
     const user = userDB as User;
     return userDB !== null ? user : null;
-    // r//eturn { statusCode: 200, response: { data: user } };
   }
 
   async function removeJWSTokenFromUser(token: string) {

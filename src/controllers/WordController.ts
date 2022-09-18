@@ -28,7 +28,7 @@ export namespace WordController {
 
     try {
       let word = await WordService.wordFromDB(query);
-      if (word.statusCode !== 200) {
+      if (!word) {
         const data = await scrapeTermania(query, 2);
         await saveWordsToDB(data);
         word = await WordService.wordFromDB(query);
@@ -37,13 +37,13 @@ export namespace WordController {
       let words: Word[] = await WordModel.find({ word: { $regex: query } });
       words = words.filter((obj) => {
         if (word === null) return true;
-        return obj.word !== word.response.data.word;
+        return obj.word !== word.word;
       });
 
-      if (word.response.data !== null) {
+      if (word) {
         res.status(200).send(
           responseObject({
-            data: [word.response.data as Word].concat(words),
+            data: [word].concat(words),
           })
         );
       } else {
@@ -217,11 +217,11 @@ export namespace WordController {
     const isValidToken = isTokenValid(token);
 
     if (!isValidToken || !ObjectId.isValid(wordId)) {
-      return res.status(400).send(
+      return res.status(401).send(
         responseObject({
           data: false,
           errorMessage: `${isValidToken ? "WordId" : "Token"} not valid.`,
-          errorCode: 400,
+          errorCode: 401,
         })
       );
     }
