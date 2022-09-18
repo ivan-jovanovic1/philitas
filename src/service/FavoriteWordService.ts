@@ -1,3 +1,5 @@
+import { ObjectId } from "mongoose";
+import { UserModel } from "../models/User";
 import { WordModel, Word } from "../models/Word";
 import { Page, Pagination } from "../shared/Pagination";
 
@@ -29,5 +31,23 @@ export namespace FavoriteWordService {
       .sort({ mainLanguge: -1, word: 1 })
       .skip(Page.beginAt(currentPage, pageSize))
       .limit(pageSize)) as Word[];
+  };
+
+  export const update = async (
+    wordId: string,
+    remove: Boolean,
+    token: string
+  ) => {
+    if (remove) {
+      await UserModel.updateOne(
+        { jwsToken: token },
+        { $pull: { favoriteWordIds: wordId } }
+      );
+    } else {
+      await UserModel.updateOne(
+        { jwsToken: token },
+        { $addToSet: { favoriteWordIds: wordId } }
+      );
+    }
   };
 }

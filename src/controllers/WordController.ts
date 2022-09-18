@@ -163,7 +163,7 @@ export namespace WordController {
 
   export async function singleFromId(req: Request, res: Response) {
     const wordId = req.params.id;
-    if (!isString(wordId) || !wordId.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!ObjectId.isValid(wordId)) {
       res
         .status(400)
         .json(responseObject({ errorMessage: "Invalid id.", errorCode: 400 }));
@@ -178,14 +178,12 @@ export namespace WordController {
         await WordService.updateHits(wordDB);
         res.status(200).send(responseObject({ data: wordDB }));
       } else {
-        res
-          .status(404)
-          .send(
-            responseObject({
-              errorMessage: "Not found in DB.",
-              errorCode: ErrorCode.notFoundData,
-            })
-          );
+        res.status(404).send(
+          responseObject({
+            errorMessage: "Not found in DB.",
+            errorCode: ErrorCode.notFoundData,
+          })
+        );
       }
     } catch (e) {
       res
@@ -211,28 +209,18 @@ export namespace WordController {
     const isValidToken = isTokenValid(token);
 
     if (!isValidToken || !ObjectId.isValid(wordId)) {
-      return res.status(401).send(
+      res.status(401).send(
         responseObject({
           data: false,
           errorMessage: `${isValidToken ? "WordId" : "Token"} not valid.`,
           errorCode: 401,
         })
       );
+      return;
     }
 
     try {
-      if (remove) {
-        await UserModel.updateOne(
-          { jwsToken: token },
-          { $pull: { favoriteWordIds: wordId } }
-        );
-      } else {
-        await UserModel.updateOne(
-          { jwsToken: token },
-          { $addToSet: { favoriteWordIds: wordId } }
-        );
-      }
-
+      await FavoriteWordService.update(wordId as string, remove, token!);
       res.status(200).send(
         responseObject({
           data: true,
