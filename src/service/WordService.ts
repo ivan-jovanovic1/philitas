@@ -2,6 +2,7 @@ import { UserModel } from "../models/User";
 import { WordModel, Word, createSearchHit } from "../models/Word";
 import { ResponseWithStatus } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
+import { ObjectId } from "mongodb";
 
 export namespace WordService {
   /**
@@ -30,6 +31,12 @@ export namespace WordService {
         },
       };
     }
+  }
+
+  export async function wordFromId(id: ObjectId) {
+    const value = await WordModel.findOne({ _id: id });
+    if (value !== null) return value as Word;
+    return null;
   }
 
   export async function updateHits(word: Word) {

@@ -173,26 +173,19 @@ export namespace WordController {
 
   export async function singleFromId(req: Request, res: Response) {
     const wordId = req.params.id;
-
-    if (wordId == null || undefined || !wordId.match(/^[0-9a-fA-F]{24}$/)) {
-      res.status(400).json(responseObject({ errorMessage: "Invalid id." }));
+    if (!isString(wordId) || !wordId.match(/^[0-9a-fA-F]{24}$/)) {
+      res
+        .status(400)
+        .json(responseObject({ errorMessage: "Invalid id.", errorCode: 400 }));
       return;
     }
 
     const objectId = new ObjectId(wordId);
 
     try {
-      const wordDB = await wordFromId(objectId);
-
-      if (wordDB !== null) {
-        await WordModel.updateOne(
-          { _id: objectId },
-          {
-            searchHits: updateSearchHits(wordDB),
-          },
-          { upsert: false }
-        );
-
+      const wordDB = await WordService.wordFromId(objectId);
+      if (wordDB) {
+        await WordService.updateHits(wordDB);
         res.status(200).send(responseObject({ data: wordDB }));
       } else {
         res
@@ -257,17 +250,6 @@ export namespace WordController {
           data: false,
         })
       );
-    }
-  }
-
-  async function wordFromId(id: ObjectId) {
-    try {
-      const value = await WordModel.findOne({ _id: new ObjectId(id) });
-      if (value !== null) return value as Word;
-      return null;
-    } catch (e) {
-      console.error(e);
-      return null;
     }
   }
 
