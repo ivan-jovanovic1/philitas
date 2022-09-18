@@ -49,22 +49,16 @@ export namespace UserService {
     return updated.modifiedCount > 0 ? null : ErrorCode.notUpdated;
   }
 
-  export async function userFromToken(
-    token: string
-  ): Promise<ResponseWithStatus> {
+  export async function userFromToken(token: string): Promise<User | null> {
     const isValid = await verifyJWSToken(token);
     if (!isValid) {
       await removeJWSTokenFromUser(token);
-      return {
-        statusCode: 403,
-        response: {
-          errorMessage: "Token expired.",
-          errorCode: ErrorCode.expiredData,
-        },
-      };
+      return null;
     }
-    const user = (await UserModel.findOne({ jwsToken: token })) as User;
-    return { statusCode: 200, response: { data: user } };
+    const userDB = await UserModel.findOne({ jwsToken: token });
+    const user = userDB as User;
+    return userDB !== null ? user : null;
+    // r//eturn { statusCode: 200, response: { data: user } };
   }
 
   async function removeJWSTokenFromUser(token: string) {

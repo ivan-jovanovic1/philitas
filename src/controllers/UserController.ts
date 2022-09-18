@@ -132,20 +132,27 @@ export namespace UserController {
     }
 
     try {
-      const userResponse = await UserService.userFromToken(token!);
-      const data = userResponse.response.data;
+      const user = await UserService.userFromToken(token!);
+      if (!user) {
+        res.status(403).send(
+          responseObject({
+            errorCode: 403,
+            errorMessage: "Token expired.",
+          })
+        );
+        return;
+      }
       const body = {
-        id: data._id,
-        username: data.username,
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
         jwsToken: token,
-        favoriteWordIds: data.favoriteWordIds,
+        favoriteWordIds: user.favoriteWordIds,
       };
-      userResponse.response.data = body;
 
-      res.status(userResponse.statusCode).send(userResponse.response);
+      res.status(200).send(responseObject({ data: body }));
     } catch (e) {
       res.status(500).send(
         responseObject({
