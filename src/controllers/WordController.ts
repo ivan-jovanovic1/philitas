@@ -9,8 +9,13 @@ import { ResponseWithPagination } from "../external/models/ScrapeModels";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 import { WordService } from "../service/WordService";
+import { FavoriteWordService } from "../service/FavoriteWordService";
 import { isString } from "../shared/SharedHelpers";
-import { isTokenValid } from "../service/TokenValidator";
+import {
+  isTokenNotValidResponse,
+  isTokenValid,
+} from "../service/TokenValidator";
+import { UserService } from "../service/UserService";
 
 export namespace WordController {
   export async function search(req: Request, res: Response) {
@@ -104,63 +109,42 @@ export namespace WordController {
   export async function favoriteList(req: Request, res: Response) {
     const page = Page.normalizedPage(req.query.page);
     const pageSize = Page.normalizedPageSize(req.query.pageSize);
-
     const token = req.headers["authorization"]?.split(" ")[1];
+    const tokenResponse = isTokenNotValidResponse(token);
 
-    if (token === undefined || token === null) {
-      return res.status(401).send(
-        responseObject({
-          data: false,
-          errorMessage: "Token not valid.",
-          errorCode: 401,
-        })
-      );
+    if (tokenResponse) {
+      res.status(tokenResponse.statusCode).send(tokenResponse.response);
+      return;
     }
 
-    const userDB = await UserModel.findOne({ jwsToken: token });
-    const user = userDB as User;
+    const user = await UserService.userFromToken(token!);
 
-    if (userDB === null) {
-      return res.status(401).send(
+    if (!user) {
+      res.status(401).send(
         responseObject({
           data: false,
           errorMessage: "Token not valid.",
           errorCode: 401,
         })
       );
+      return;
     }
 
     const filtered = user.favoriteWordIds.filter(
       (value) => ObjectId.isValid(value) && value.length > 10
     );
 
-    if (filtered.length === 0) {
-      return res.status(400).send(
-        responseObject({
-          data: false,
-          errorMessage: "User dont have favorite words.",
-          errorCode: 400,
-        })
-      );
-    }
-
-    const pagination: Pagination = {
-      currentPage: page,
-      allPages: Math.ceil(
-        Number(
-          await WordModel.collection.countDocuments({
-            _id: { $in: filtered },
-          })
-        ) / pageSize
-      ),
-      pageSize: pageSize,
-    };
-
     try {
-      const words = await WordModel.find({ _id: { $in: filtered } })
-        .sort({ mainLanguge: -1, word: 1 })
-        .skip(Page.beginAt(page, pageSize))
-        .limit(pageSize);
+      const pagination = await FavoriteWordService.pagination(
+        page,
+        pageSize,
+        filtered
+      );
+      const words = await FavoriteWordService.wordList(
+        page,
+        pageSize,
+        filtered
+      );
       res.json(
         responseObject({
           data: words,
@@ -168,7 +152,12 @@ export namespace WordController {
         })
       );
     } catch (e) {
-      console.error(e);
+      res.status(500).send(
+        responseObject({
+          errorMessage: "Internal server error.",
+          errorCode: 500,
+        })
+      );
     }
   }
 
@@ -191,7 +180,12 @@ export namespace WordController {
       } else {
         res
           .status(404)
-          .send(responseObject({ errorMessage: "Not found in DB." }));
+          .send(
+            responseObject({
+              errorMessage: "Not found in DB.",
+              errorCode: ErrorCode.notFoundData,
+            })
+          );
       }
     } catch (e) {
       res
