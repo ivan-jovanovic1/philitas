@@ -27,11 +27,11 @@ export namespace FavoriteWordService {
     pageSize: number,
     userId: string
   ) => {
-    const favorites = (await UserFavoritesModel.findOne({ userId: userId })
+    const favorites = await UserFavoritesModel.findOne({ userId: userId })
       .skip(Page.beginAt(currentPage, pageSize))
-      .limit(pageSize)) as UserFavorites;
+      .limit(pageSize);
 
-    if (favorites.wordIds.length === 0) {
+    if (!favorites) {
       return [];
     }
 
