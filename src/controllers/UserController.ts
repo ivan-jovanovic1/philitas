@@ -4,6 +4,7 @@ import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 import { UserService } from "../service/UserService";
 import { isString } from "../shared/SharedHelpers";
+import { isTokenNotValidResponse } from "../service/TokenValidator";
 
 export namespace UserController {
   export async function create(req: Request, res: Response) {
@@ -97,13 +98,20 @@ export namespace UserController {
    */
   export async function logout(req: Request, res: Response) {
     const token = req.headers["authorization"]?.split(" ")[1];
+    const tokenResponse = isTokenNotValidResponse(token);
 
+    if (tokenResponse) {
+      res.status(tokenResponse.statusCode).send(tokenResponse.response);
+      return;
+    }
     try {
-      const user = (await UserModel.findOne({ jwsToken: token })) as User;
-      await UserModel.updateOne({ _id: user._id }, { jwsToken: undefined });
-      res.status(200).send(
+      const updateErrorCode = await UserService.logoutUser(token!);
+      const isError = updateErrorCode !== null;
+      res.status(isError ? updateErrorCode : 200).send(
         responseObject({
-          data: true,
+          data: isError ? false : true,
+          errorMessage: "Error while removing token.",
+          errorCode: updateErrorCode,
         })
       );
     } catch {
@@ -121,13 +129,9 @@ export namespace UserController {
     const token = req.headers["authorization"]?.split(" ")[1];
 
     // Check if token is null or undefined
-    if (!isString(token)) {
-      res.status(400).send(
-        responseObject({
-          errorCode: ErrorCode.undefinedData,
-          errorMessage: "Token's type must be string.",
-        })
-      );
+    const tokenResponse = isTokenNotValidResponse(token);
+    if (tokenResponse) {
+      res.status(tokenResponse.statusCode).send(tokenResponse.response);
       return;
     }
 

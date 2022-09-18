@@ -37,6 +37,17 @@ export namespace UserService {
 
     return result.modifiedCount > 0 ? { user, jwsToken } : null;
   }
+  export async function logoutUser(token: string) {
+    const userDB = await UserModel.findOne({ jwsToken: token }); //as User
+    if (!userDB) return ErrorCode.notFoundData;
+    const user = userDB as User;
+    const updated = await UserModel.updateOne(
+      { _id: user._id },
+      { jwsToken: undefined }
+    );
+
+    return updated.modifiedCount > 0 ? null : ErrorCode.notUpdated;
+  }
 
   export async function userFromToken(
     token: string
