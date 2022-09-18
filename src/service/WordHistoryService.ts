@@ -2,7 +2,7 @@ import { WordModel, Word } from "../models/Word";
 import { UserHistory, UserHistoryModel } from "../models/UserHistory";
 import { Page, Pagination } from "../shared/Pagination";
 
-export namespace HistoryWordService {
+export namespace WordHistoryService {
   export const pagination = async (
     page: number,
     pageSize: number,

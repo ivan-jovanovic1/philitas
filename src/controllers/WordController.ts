@@ -9,7 +9,7 @@ import { ErrorCode } from "../models/ErrorCode";
 import { WordService } from "../service/WordService";
 import { FavoriteWordService } from "../service/FavoriteWordService";
 import { isString } from "../shared/SharedHelpers";
-import { HistoryWordService } from "../service/HistoryService";
+import { WordHistoryService } from "../service/WordHistoryService";
 import {
   isTokenNotValidResponse,
   isTokenValid,
@@ -187,7 +187,7 @@ export namespace WordController {
         );
 
         if (isString(userId)) {
-          await HistoryWordService.add(wordId, userId!);
+          await WordHistoryService.add(wordId, userId!);
         }
         await WordViewsService.update(wordId);
       } else {
