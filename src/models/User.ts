@@ -12,8 +12,6 @@ let userSchema = new Schema<User>({
   jwsToken: { type: String, required: false },
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
-  wordIds: { type: [String], required: false },
-  favoriteWordIds: { type: [String], required: false },
 });
 
 class User {
@@ -25,8 +23,6 @@ class User {
   jwsToken?: string;
   firstName?: string;
   lastName?: string;
-  wordIds: string[];
-  favoriteWordIds: string[];
 
   constructor(
     username: string,
@@ -42,8 +38,6 @@ class User {
     this.isVerified = false;
     this.firstName = firstName;
     this.lastName = lastName;
-    this.wordIds = [];
-    this.favoriteWordIds = [];
   }
 }
 
@@ -56,8 +50,6 @@ const authenticate = (username: string, password: string) => {
         username: string;
         email: string;
         isVerified: boolean;
-        wordIds: string[];
-        favoriteWordIds: string[];
         firstName: string;
         lastName: string;
       }) => void,
@@ -85,8 +77,6 @@ const authenticate = (username: string, password: string) => {
                 username: user!.username,
                 email: user!.email,
                 isVerified: user!.isVerified,
-                wordIds: user!.wordIds,
-                favoriteWordIds: user!.favoriteWordIds,
                 firstName: user?.firstName !== undefined ? user?.firstName : "",
                 lastName: user?.lastName !== undefined ? user?.lastName : "",
               });

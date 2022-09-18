@@ -22,7 +22,6 @@ export namespace UserController {
               jwsToken: user.jwsToken,
               firstName: user.firstName,
               lastName: user.lastName,
-              favoriteWordIds: user.favoriteWordIds,
             },
           })
         );
@@ -76,7 +75,6 @@ export namespace UserController {
         firstName: data.user.firstName,
         lastName: data.user.lastName,
         jwsToken: data.jwsToken,
-        favoriteWordIds: data.user.favoriteWordIds,
       };
       res.status(200).send(responseObject({ data: jsonBody }));
     } catch {
@@ -149,7 +147,6 @@ export namespace UserController {
         firstName: user.firstName,
         lastName: user.lastName,
         jwsToken: token,
-        favoriteWordIds: user.favoriteWordIds,
       };
 
       res.status(200).send(responseObject({ data: body }));
