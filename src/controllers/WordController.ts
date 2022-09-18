@@ -17,6 +17,8 @@ import {
 import { UserService } from "../service/UserService";
 
 import { IncomingHttpHeaders } from "http";
+import { WordViews } from "../models/WordViewsModel";
+import { WordViewsService } from "../service/WordViewsService";
 
 declare module "http" {
   interface IncomingHttpHeaders {
@@ -171,7 +173,6 @@ export namespace WordController {
         : false;
 
       if (wordDB) {
-        await WordService.updateHits(wordDB);
         res.status(200).send(
           responseObject({
             data: {
@@ -179,7 +180,6 @@ export namespace WordController {
               language: wordDB!.language,
               word: wordDB!.word,
               dictionaryExplanations: wordDB.dictionaryExplanations,
-              searchHits: wordDB.searchHits,
               translations: wordDB.translations,
               isFavorite: isFavorite,
             },
@@ -189,6 +189,7 @@ export namespace WordController {
         if (isString(userId)) {
           await HistoryWordService.add(wordId, userId!);
         }
+        await WordViewsService.update(wordId);
       } else {
         res.status(404).send(
           responseObject({

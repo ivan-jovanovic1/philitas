@@ -1,5 +1,5 @@
 import { UserModel } from "../models/User";
-import { WordModel, Word, createSearchHit } from "../models/Word";
+import { WordModel, Word } from "../models/Word";
 import { ObjectId } from "mongodb";
 import { Page, Pagination } from "../shared/Pagination";
 
@@ -18,16 +18,6 @@ export namespace WordService {
     const value = await WordModel.findOne({ _id: id });
     if (value !== null) return value as Word;
     return null;
-  }
-
-  export async function updateHits(word: Word) {
-    await WordModel.updateOne(
-      { word: word.word },
-      {
-        searchHits: processSearchHits(word),
-      },
-      { upsert: false }
-    );
   }
 
   /**
@@ -61,24 +51,5 @@ export namespace WordService {
       .sort({ word: 1 })
       .skip(Page.beginAt(beginAtPage, pageSize))
       .limit(pageSize)) as Word[];
-  }
-
-  function processSearchHits(word: Word) {
-    const currentDate = new Date();
-    let alreadyUpdated = false;
-    // Try to find in existing months and years
-    word.searchHits.forEach((searchHit, index) => {
-      if (
-        searchHit.month === currentDate.getMonth() + 1 &&
-        searchHit.year === currentDate.getFullYear()
-      ) {
-        alreadyUpdated = true;
-        word.searchHits[index].hits++;
-      }
-    });
-    // If not found in existing months, add new month
-    if (!alreadyUpdated) word.searchHits.push(createSearchHit());
-
-    return word.searchHits;
   }
 }
