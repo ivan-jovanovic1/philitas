@@ -2,7 +2,7 @@ import {
   Dictionary,
   WordExplanations,
   WordExplanationsModel,
-} from "../models/WordExplanation";
+} from "../models/WordExplanations";
 export namespace WordExplanationService {
   export const list = async (wordId: string) => {
     const modelDB = await WordExplanationsModel.findOne({ wordId: wordId });

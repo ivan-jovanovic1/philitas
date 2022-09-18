@@ -4,11 +4,19 @@ class Dictionary {
   explanations: string[];
   dictionaryName: string;
   source: string;
+  /// This property represents only word itself. Explanations are always in Slovene.
+  wordLanguage: string;
 
-  constructor(explanations: string[], dictionaryName: string, source: string) {
+  constructor(
+    explanations: string[],
+    dictionaryName: string,
+    source: string,
+    wordLanguage: string
+  ) {
     this.explanations = explanations;
     this.dictionaryName = dictionaryName;
     this.source = source;
+    this.wordLanguage = wordLanguage;
   }
 }
 

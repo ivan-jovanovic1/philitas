@@ -20,22 +20,14 @@ interface Translation {
 }
 
 class Word {
-  word: string;
+  name: string;
   language: string;
-  dictionaryExplanations: DictionaryExplanation[];
-  translations: Translation[];
+  translation: Translation | null;
 
-  constructor(termania: TermaniaWord) {
-    this.word = termania.word;
-    this.dictionaryExplanations = [
-      {
-        explanations: termania.explanations,
-        dictionaryName: termania.dictionaryName,
-        source: termania.source,
-      },
-    ];
-    this.language = termania.language;
-    this.translations = [];
+  constructor(name: string, language: string, translation: Translation | null) {
+    this.name = name;
+    this.language = language;
+    this.translation = translation;
   }
 }
 interface Word {
@@ -44,13 +36,9 @@ interface Word {
 }
 
 const wordSchema = new Schema<Word>({
-  word: { type: String, required: true },
-  dictionaryExplanations: {
-    type: [] as DictionaryExplanation[],
-    required: true,
-  },
+  name: { type: String, required: true },
   language: { type: String, required: true },
-  translations: { type: [] as Translation[], required: true },
+  translation: { type: {} as Translation, required: false },
 });
 
 const WordModel = model<Word>("Word", wordSchema);

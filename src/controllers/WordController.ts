@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { scrapeTermania } from "../external/services/ScrapeService";
-import { WordModel, Word } from "../models/Word";
+import { WordModel, Word, Translation } from "../models/Word";
 import { Page } from "../shared/Pagination";
 import { ObjectId } from "mongodb";
 import { TermaniaWord } from "../external/models/ScrapeModels";
@@ -10,8 +10,14 @@ import { WordService } from "../service/WordService";
 import { FavoriteWordService } from "../service/FavoriteWordService";
 import { isString } from "../shared/SharedHelpers";
 import { WordHistoryService } from "../service/WordHistoryService";
-
 import { WordViewsService } from "../service/WordViewsService";
+import { WordExplanationService } from "../service/WordExplanationService";
+import Translate from "../external/services/TranslateService";
+import {
+  Dictionary,
+  WordExplanations,
+  WordExplanationsModel,
+} from "../models/WordExplanations";
 
 declare module "http" {
   interface IncomingHttpHeaders {
@@ -43,7 +49,7 @@ export namespace WordController {
       let words: Word[] = await WordModel.find({ word: { $regex: query } });
       words = words.filter((obj) => {
         if (word === null) return true;
-        return obj.word !== word.word;
+        return obj.name !== word.name;
       });
 
       if (word) {
@@ -164,6 +170,7 @@ export namespace WordController {
       const isFavorite = isString(userId)
         ? await FavoriteWordService.isFavorite(userId!, wordId)
         : false;
+      const dictionaries = await WordExplanationService.list(wordId);
 
       if (wordDB) {
         res.status(200).send(
@@ -171,9 +178,9 @@ export namespace WordController {
             data: {
               id: wordId,
               language: wordDB!.language,
-              word: wordDB!.word,
-              dictionaryExplanations: wordDB.dictionaryExplanations,
-              translations: wordDB.translations,
+              word: wordDB!.name,
+              dictionaryExplanations: dictionaries,
+              translations: [wordDB.translation],
               isFavorite: isFavorite,
             },
           })
@@ -248,14 +255,47 @@ export namespace WordController {
    * @param results Results from scrapping.
    */
   async function saveWordsToDB(results: TermaniaWord[]) {
-    for (const word of results) {
-      const wordModel = new WordModel(word);
+    let translation: Translation | null = null;
+    let dictionaries: Dictionary[] = [];
+    let wordName = "";
+    let language = "";
 
-      try {
-        await wordModel.save();
-      } catch (e) {
-        console.error(e);
+    for (const current of results) {
+      if (!translation) {
+        translation = await Translate.englishSloveneInvertible(
+          current.word,
+          current.language
+        );
       }
+      if (wordName === "") {
+        wordName = current.word;
+      }
+
+      if (language === "") {
+        language = current.language;
+      }
+
+      dictionaries.push(
+        new Dictionary(
+          current.explanations,
+          current.dictionaryName,
+          current.source,
+          current.language
+        )
+      );
+    }
+
+    const wordModel = new WordModel(new Word(wordName, language, translation));
+    await wordModel.save();
+    const wordExplanations = new WordExplanationsModel(
+      new WordExplanations(wordModel._id.toString(), dictionaries)
+    );
+    await wordExplanations.save();
+
+    try {
+      await wordModel.save();
+    } catch (e) {
+      console.error(e);
     }
   }
 }
