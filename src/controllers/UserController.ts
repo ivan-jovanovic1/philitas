@@ -107,11 +107,11 @@ export namespace UserController {
     try {
       const updateErrorCode = await UserService.logoutUser(token!);
       const isError = updateErrorCode !== null;
-      res.status(isError ? updateErrorCode : 200).send(
+      res.status(isError ? 400 : 200).send(
         responseObject({
           data: isError ? false : true,
-          errorMessage: "Error while removing token.",
-          errorCode: updateErrorCode,
+          errorMessage: isError ? "Error while removing token." : null,
+          errorCode: isError ? updateErrorCode : null,
         })
       );
     } catch {
