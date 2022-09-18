@@ -11,26 +11,16 @@ export namespace WordService {
    * @returns `Promise<Word>` if found in DB, `Promise<Error>` otherwise.
    */
   export async function wordFromDB(word: string): Promise<ResponseWithStatus> {
-    try {
-      const resultDB = await WordModel.findOne({ word: { $regex: word } });
-      const isNull = resultDB === null;
-      return {
-        statusCode: isNull ? 404 : 200,
-        response: {
-          errorCode: isNull ? ErrorCode.notFoundData : null,
-          errorMessage: isNull ? "Not found in the database." : null,
-          data: isNull ? null : (resultDB as Word),
-        },
-      };
-    } catch (e) {
-      return {
-        statusCode: 500,
-        response: {
-          errorCode: 500,
-          errorMessage: "Internal server error.",
-        },
-      };
-    }
+    const resultDB = await WordModel.findOne({ word: { $regex: word } });
+    const isNull = resultDB === null;
+    return {
+      statusCode: isNull ? 404 : 200,
+      response: {
+        errorCode: isNull ? ErrorCode.notFoundData : null,
+        errorMessage: isNull ? "Not found in the database." : null,
+        data: isNull ? null : (resultDB as Word),
+      },
+    };
   }
 
   export async function wordFromId(id: ObjectId) {

@@ -25,29 +25,38 @@ export namespace WordController {
       return;
     }
 
-    let word = await WordService.wordFromDB(query);
-    if (word.statusCode !== 200) {
-      const data = await scrapeTermania(query, 2);
-      await saveWordsToDB(data);
-      word = await WordService.wordFromDB(query);
-    }
+    try {
+      let word = await WordService.wordFromDB(query);
+      if (word.statusCode !== 200) {
+        const data = await scrapeTermania(query, 2);
+        await saveWordsToDB(data);
+        word = await WordService.wordFromDB(query);
+      }
 
-    let words: Word[] = await WordModel.find({ word: { $regex: query } });
-    words = words.filter((obj) => {
-      if (word === null) return true;
-      return obj.word !== word.response.data.word;
-    });
+      let words: Word[] = await WordModel.find({ word: { $regex: query } });
+      words = words.filter((obj) => {
+        if (word === null) return true;
+        return obj.word !== word.response.data.word;
+      });
 
-    if (word.response.data !== null) {
-      res.status(200).send(
+      if (word.response.data !== null) {
+        res.status(200).send(
+          responseObject({
+            data: [word.response.data as Word].concat(words),
+          })
+        );
+      } else {
+        res.status(200).send(
+          responseObject({
+            data: words,
+          })
+        );
+      }
+    } catch (e) {
+      res.status(500).send(
         responseObject({
-          data: [word.response.data as Word].concat(words),
-        })
-      );
-    } else {
-      res.status(200).send(
-        responseObject({
-          data: words,
+          errorCode: 500,
+          errorMessage: "Internal server error.",
         })
       );
     }
