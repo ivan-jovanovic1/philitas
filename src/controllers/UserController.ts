@@ -1,4 +1,3 @@
-import { UserModel, User } from "../models/User";
 import { Request, Response } from "express";
 import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
