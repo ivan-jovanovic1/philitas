@@ -43,7 +43,7 @@ export namespace UserService {
     const user = userDB as User;
     const updated = await UserModel.updateOne(
       { _id: user._id },
-      { jwsToken: undefined }
+      { jwsToken: "" }
     );
 
     return updated.modifiedCount > 0 ? null : ErrorCode.notUpdated;
