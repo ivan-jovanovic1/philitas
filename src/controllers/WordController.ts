@@ -9,6 +9,7 @@ import { ErrorCode } from "../models/ErrorCode";
 import { WordService } from "../service/WordService";
 import { FavoriteWordService } from "../service/FavoriteWordService";
 import { isString } from "../shared/SharedHelpers";
+import { HistoryWordService } from "../service/HistoryService";
 import {
   isTokenNotValidResponse,
   isTokenValid,
@@ -153,6 +154,7 @@ export namespace WordController {
 
   export async function singleFromId(req: Request, res: Response) {
     const wordId = req.params.id;
+    const userId = req.headers["user-id"];
     if (!ObjectId.isValid(wordId)) {
       res
         .status(400)
@@ -164,9 +166,29 @@ export namespace WordController {
 
     try {
       const wordDB = await WordService.wordFromId(objectId);
+      const isFavorite = isString(userId)
+        ? await FavoriteWordService.isFavorite(userId!, wordId)
+        : false;
+
       if (wordDB) {
         await WordService.updateHits(wordDB);
-        res.status(200).send(responseObject({ data: wordDB }));
+        res.status(200).send(
+          responseObject({
+            data: {
+              id: wordId,
+              language: wordDB!.language,
+              word: wordDB!.word,
+              dictionaryExplanations: wordDB.dictionaryExplanations,
+              searchHits: wordDB.searchHits,
+              translations: wordDB.translations,
+              isFavorite: isFavorite,
+            },
+          })
+        );
+
+        if (isString(userId)) {
+          await HistoryWordService.add(wordId, userId!);
+        }
       } else {
         res.status(404).send(
           responseObject({
