@@ -15,8 +15,7 @@ export namespace UserController {
       );
       if (!isTaken) {
         const user = await UserService.save(req.body);
-
-        return res.status(200).send(
+        res.status(200).send(
           responseObject({
             data: {
               id: user._id,
@@ -30,7 +29,7 @@ export namespace UserController {
           })
         );
       } else {
-        return res.status(409).send(
+        res.status(409).send(
           responseObject({
             errorMessage: "Username is taken",
             errorCode: ErrorCode.takenUsername,
