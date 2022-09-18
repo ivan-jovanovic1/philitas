@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { scrapeTermania } from "../external/services/ScrapeService";
-import { WordModel, Word, updateSearchHits } from "../models/Word";
+import { WordModel, Word } from "../models/Word";
 import { User, UserModel } from "../models/User";
 import Translate from "../external/services/TranslateService";
 import { Pagination, Page } from "../shared/Pagination";
@@ -10,6 +10,7 @@ import { responseObject } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 import { WordService } from "../service/WordService";
 import { isString } from "../shared/SharedHelpers";
+import { isTokenValid } from "../service/TokenValidator";
 
 export namespace WordController {
   export async function search(req: Request, res: Response) {
@@ -72,19 +73,10 @@ export namespace WordController {
     const page = Page.normalizedPage(req.query.page);
     const pageSize = Page.normalizedPageSize(req.query.pageSize);
 
-    const pagination: Pagination = {
-      currentPage: page,
-      allPages: Math.ceil(
-        Number(await WordModel.collection.countDocuments()) / pageSize
-      ),
-      pageSize: pageSize,
-    };
-
     try {
-      const words = await WordModel.find()
-        .sort({ word: 1 })
-        .skip(Page.beginAt(page, pageSize))
-        .limit(pageSize);
+      const pagination = await WordService.allWordsPagination(page, pageSize);
+      const words = await WordService.allWordsList(page, pageSize);
+
       res.json(
         responseObject({
           data: words,
@@ -222,12 +214,13 @@ export namespace WordController {
   ) {
     const token = req.headers["authorization"]?.split(" ")[1];
     const wordId = req.body.id;
+    const isValidToken = isTokenValid(token);
 
-    if (token === undefined || token === null || !ObjectId.isValid(wordId)) {
+    if (!isValidToken || !ObjectId.isValid(wordId)) {
       return res.status(400).send(
         responseObject({
           data: false,
-          errorMessage: "Token or wordId not valid.",
+          errorMessage: `${isValidToken ? "WordId" : "Token"} not valid.`,
           errorCode: 400,
         })
       );

@@ -3,6 +3,7 @@ import { WordModel, Word, createSearchHit } from "../models/Word";
 import { ResponseWithStatus } from "../models/BaseResponse";
 import { ErrorCode } from "../models/ErrorCode";
 import { ObjectId } from "mongodb";
+import { Page, Pagination } from "../shared/Pagination";
 
 export namespace WordService {
   /**
@@ -50,6 +51,26 @@ export namespace WordService {
       { jwsToken: token },
       { $addToSet: { wordIds: wordId } }
     );
+  }
+
+  export async function allWordsPagination(
+    page: number,
+    pageSize: number
+  ): Promise<Pagination> {
+    return {
+      currentPage: page,
+      allPages: Math.ceil(
+        Number(await WordModel.collection.countDocuments()) / pageSize
+      ),
+      pageSize: pageSize,
+    };
+  }
+
+  export async function allWordsList(beginAt: number, pageSize: number) {
+    return (await WordModel.find()
+      .sort({ word: 1 })
+      .skip(Page.beginAt(beginAt, pageSize))
+      .limit(pageSize)) as Word[];
   }
 
   function processSearchHits(word: Word) {
