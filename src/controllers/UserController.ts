@@ -125,29 +125,35 @@ export namespace UserController {
   }
 
   export async function userFromToken(req: Request, res: Response) {
-    // Remove "Bearer" prefix as we need only token value
     const token = req.headers["authorization"]?.split(" ")[1];
-
-    // Check if token is null or undefined
     const tokenResponse = isTokenNotValidResponse(token);
     if (tokenResponse) {
       res.status(tokenResponse.statusCode).send(tokenResponse.response);
       return;
     }
 
-    const userResponse = await UserService.userFromToken(token!);
-    const data = userResponse.response.data;
-    const body = {
-      id: data._id,
-      username: data.username,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      jwsToken: token,
-      favoriteWordIds: data.favoriteWordIds,
-    };
-    userResponse.response.data = body;
+    try {
+      const userResponse = await UserService.userFromToken(token!);
+      const data = userResponse.response.data;
+      const body = {
+        id: data._id,
+        username: data.username,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        jwsToken: token,
+        favoriteWordIds: data.favoriteWordIds,
+      };
+      userResponse.response.data = body;
 
-    res.status(userResponse.statusCode).send(userResponse.response);
+      res.status(userResponse.statusCode).send(userResponse.response);
+    } catch (e) {
+      res.status(500).send(
+        responseObject({
+          errorMessage: "Internal server error",
+          data: false,
+        })
+      );
+    }
   }
 }
