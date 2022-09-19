@@ -42,7 +42,7 @@ export namespace WordController {
     try {
       let word = await WordService.wordFromDB(query);
       if (!word) {
-        const data = await scrapeTermania(query, 2);
+        const data = await scrapeTermania(query, 1);
         await saveWordsToDB(data);
         word = await WordService.wordFromDB(query);
       }
