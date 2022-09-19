@@ -18,7 +18,6 @@ import {
   WordExplanations,
   WordExplanationsModel,
 } from "../models/WordExplanations";
-import { inspect } from "util";
 
 declare module "http" {
   interface IncomingHttpHeaders {
@@ -27,7 +26,7 @@ declare module "http" {
 }
 export namespace WordController {
   export async function search(req: Request, res: Response) {
-    const query = req.params.query;
+    let query = req.params.query;
 
     if (!isString(query)) {
       res.status(400).send(
@@ -39,6 +38,7 @@ export namespace WordController {
       return;
     }
 
+    query = query.toLowerCase();
     try {
       let word = await WordService.wordFromDB(query);
       if (!word) {
@@ -54,7 +54,6 @@ export namespace WordController {
       });
 
       if (word) {
-        console.log("Ivan, here");
         res.status(200).send(
           responseObject({
             data: [word].concat(words),
@@ -104,7 +103,6 @@ export namespace WordController {
           errorCode: 500,
         })
       );
-      console.error(e);
     }
   }
 
@@ -145,7 +143,6 @@ export namespace WordController {
         })
       );
     } catch (e) {
-      console.error(e);
       res.status(500).send(
         responseObject({
           errorMessage: "Internal server error.",
@@ -287,18 +284,15 @@ export namespace WordController {
         )
       );
     }
-    try {
-      for (const wordKey of Object.keys(words)) {
-        const wordModel = new WordModel(words[wordKey]);
-        const wordId = wordModel._id.toString();
-        const explanationModel = new WordExplanationsModel(
-          new WordExplanations(wordId, dictionaries[wordId])
-        );
-        await wordModel.save();
-        await explanationModel.save();
-      }
-    } catch (e) {
-      console.error(e);
+
+    for (const wordKey of Object.keys(words)) {
+      const wordModel = new WordModel(words[wordKey]);
+      const wordId = wordModel._id.toString();
+      const explanationModel = new WordExplanationsModel(
+        new WordExplanations(wordId, dictionaries[wordId])
+      );
+      await wordModel.save();
+      await explanationModel.save();
     }
   }
 }

@@ -1,8 +1,7 @@
-import { Router, Request, Response, NextFunction } from "express";
-import { JwtPayload, verify, VerifyErrors } from "jsonwebtoken";
-import { NIL } from "uuid";
+import { Request, Response, NextFunction } from "express";
+import { verify, VerifyErrors } from "jsonwebtoken";
 import { responseObject } from "../models/BaseResponse";
-import { User, UserModel } from "../models/User";
+import { UserModel } from "../models/User";
 import { ErrorCode } from "../models/ErrorCode";
 
 declare global {

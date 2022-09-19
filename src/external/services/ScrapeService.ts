@@ -7,8 +7,6 @@ import {
   TermaniaWord,
 } from "../models/ScrapeModels";
 import { removeDiacritics } from "../../service/RemoveDiactritis";
-import { inspect } from "util";
-import { val } from "cheerio/lib/api/attributes";
 
 /**
  * Scrapes data from Termania.
