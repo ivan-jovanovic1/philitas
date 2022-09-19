@@ -37,11 +37,12 @@ export namespace WordService {
     page: number,
     pageSize: number
   ): Promise<Pagination> {
+    const allPages = Math.ceil(
+      Number(await WordModel.collection.countDocuments()) / pageSize
+    );
     return {
       currentPage: page,
-      allPages: Math.ceil(
-        Number(await WordModel.collection.countDocuments()) / pageSize
-      ),
+      allPages: allPages > 0 ? allPages : 1,
       pageSize: pageSize,
     };
   }
