@@ -1,5 +1,7 @@
 import { TermaniaWord } from "../external/models/ScrapeModels";
 import { Schema, model } from "mongoose";
+import { ObjectId } from "mongodb";
+
 import { v4 as uuid } from "uuid";
 
 class DictionaryExplanation {
@@ -20,11 +22,13 @@ interface Translation {
 }
 
 class Word {
+  _id: ObjectId;
   name: string;
   language: string;
   translation: Translation | null;
 
   constructor(name: string, language: string, translation: Translation | null) {
+    this._id = new ObjectId();
     this.name = name;
     this.language = language;
     this.translation = translation;
@@ -36,6 +40,7 @@ interface Word {
 }
 
 const wordSchema = new Schema<Word>({
+  _id: { type: ObjectId, required: true },
   name: { type: String, required: true },
   language: { type: String, required: true },
   translation: { type: {} as Translation, required: false },

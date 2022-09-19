@@ -10,7 +10,7 @@ export namespace WordService {
    * @returns `Promise<Word>` if found in DB, `Promise<Error>` otherwise.
    */
   export async function wordFromDB(word: string): Promise<Word | null> {
-    const resultDB = await WordModel.findOne({ word: { $regex: word } });
+    const resultDB = await WordModel.findOne({ name: { $regex: word } });
     return resultDB === null ? null : (resultDB as Word);
   }
 

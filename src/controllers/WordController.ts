@@ -18,6 +18,7 @@ import {
   WordExplanations,
   WordExplanationsModel,
 } from "../models/WordExplanations";
+import { inspect } from "util";
 
 declare module "http" {
   interface IncomingHttpHeaders {
@@ -46,13 +47,14 @@ export namespace WordController {
         word = await WordService.wordFromDB(query);
       }
 
-      let words: Word[] = await WordModel.find({ word: { $regex: query } });
+      let words: Word[] = await WordModel.find({ name: { $regex: query } });
       words = words.filter((obj) => {
         if (word === null) return true;
         return obj.name !== word.name;
       });
 
       if (word) {
+        console.log("Ivan, here");
         res.status(200).send(
           responseObject({
             data: [word].concat(words),
@@ -255,27 +257,28 @@ export namespace WordController {
    * @param results Results from scrapping.
    */
   async function saveWordsToDB(results: TermaniaWord[]) {
-    let translation: Translation | null = null;
-    let dictionaries: Dictionary[] = [];
-    let wordName = "";
-    let language = "";
+    let words: { [id: string]: Word } = {};
+    let dictionaries: { [id: string]: Dictionary[] } = {};
 
     for (const current of results) {
-      if (!translation) {
-        translation = await Translate.englishSloveneInvertible(
+      const wordKey = current.word;
+      if (!Object.keys(words).includes(wordKey)) {
+        const translation = await Translate.englishSloveneInvertible(
           current.word,
           current.language
         );
-      }
-      if (wordName === "") {
-        wordName = current.word;
-      }
-
-      if (language === "") {
-        language = current.language;
+        words[wordKey] = new WordModel(
+          new Word(current.word, current.language, translation)
+        );
       }
 
-      dictionaries.push(
+      const wordId = words[wordKey]._id.toString();
+
+      if (!Object.keys(dictionaries).includes(wordId)) {
+        dictionaries[wordId] = [];
+      }
+
+      dictionaries[wordId].push(
         new Dictionary(
           current.explanations,
           current.dictionaryName,
@@ -284,16 +287,16 @@ export namespace WordController {
         )
       );
     }
-
-    const wordModel = new WordModel(new Word(wordName, language, translation));
-    await wordModel.save();
-    const wordExplanations = new WordExplanationsModel(
-      new WordExplanations(wordModel._id.toString(), dictionaries)
-    );
-    await wordExplanations.save();
-
     try {
-      await wordModel.save();
+      for (const wordKey of Object.keys(words)) {
+        const wordModel = new WordModel(words[wordKey]);
+        const wordId = wordModel._id.toString();
+        const explanationModel = new WordExplanationsModel(
+          new WordExplanations(wordId, dictionaries[wordId])
+        );
+        await wordModel.save();
+        await explanationModel.save();
+      }
     } catch (e) {
       console.error(e);
     }
