@@ -14,7 +14,7 @@ export namespace FavoriteWordService {
       allPages: Math.ceil(
         Number(
           await UserFavoritesModel.collection.countDocuments({
-            _id: userId,
+            userId: userId,
           })
         ) / pageSize
       ),
@@ -65,6 +65,14 @@ export namespace FavoriteWordService {
         );
       }
     }
+  };
+
+  export const numberOfFavoriteWords = async (userId: string) => {
+    const modelDB = await UserFavoritesModel.findOne({ userId: userId });
+    if (modelDB) {
+      return (modelDB as UserFavorites).wordIds.length;
+    }
+    return 0;
   };
 
   export const isFavorite = async (userId: string, wordId: string) => {

@@ -4,6 +4,7 @@ import { ErrorCode } from "../models/ErrorCode";
 import { UserService } from "../service/UserService";
 import { isString } from "../shared/SharedHelpers";
 import { isTokenNotValidResponse } from "../service/TokenValidator";
+import { FavoriteWordService } from "../service/FavoriteWordService";
 
 export namespace UserController {
   export async function create(req: Request, res: Response) {
@@ -13,6 +14,7 @@ export namespace UserController {
       );
       if (!isTaken) {
         const user = await UserService.save(req.body);
+
         res.status(200).send(
           responseObject({
             data: {
@@ -68,6 +70,10 @@ export namespace UserController {
         );
         return;
       }
+      const favCount = await FavoriteWordService.numberOfFavoriteWords(
+        data.user._id!
+      );
+
       const jsonBody = {
         id: data.user._id,
         username: data.user.username,
@@ -75,6 +81,7 @@ export namespace UserController {
         firstName: data.user.firstName,
         lastName: data.user.lastName,
         jwsToken: data.jwsToken,
+        favoritesCount: favCount,
       };
       res.status(200).send(responseObject({ data: jsonBody }));
     } catch {
@@ -124,6 +131,18 @@ export namespace UserController {
   export async function userFromToken(req: Request, res: Response) {
     const token = req.headers["authorization"]?.split(" ")[1];
     const tokenResponse = isTokenNotValidResponse(token);
+    const userId = req.headers["user-id"]; //?.split(" "[1]);
+
+    if (!isString(userId)) {
+      res.status(401).send(
+        responseObject({
+          errorCode: ErrorCode.undefinedData,
+          errorMessage: "Invalid user id header",
+        })
+      );
+      return;
+    }
+
     if (tokenResponse) {
       res.status(tokenResponse.statusCode).send(tokenResponse.response);
       return;
@@ -131,6 +150,7 @@ export namespace UserController {
 
     try {
       const user = await UserService.userFromToken(token!);
+      const favCount = await FavoriteWordService.numberOfFavoriteWords(userId!);
       if (!user) {
         res.status(403).send(
           responseObject({
@@ -147,6 +167,7 @@ export namespace UserController {
         firstName: user.firstName,
         lastName: user.lastName,
         jwsToken: token,
+        favoritesCount: favCount,
       };
 
       res.status(200).send(responseObject({ data: body }));

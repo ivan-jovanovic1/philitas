@@ -18,6 +18,7 @@ import {
   WordExplanations,
   WordExplanationsModel,
 } from "../models/WordExplanations";
+import { inspect } from "util";
 
 declare module "http" {
   interface IncomingHttpHeaders {
@@ -254,6 +255,7 @@ export namespace WordController {
    * @param results Results from scrapping.
    */
   async function saveWordsToDB(results: TermaniaWord[]) {
+    console.log(inspect(results, false, null, true /* enable colors */));
     let words: { [id: string]: Word } = {};
     let dictionaries: { [id: string]: Dictionary[] } = {};
 
