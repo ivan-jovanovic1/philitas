@@ -58,9 +58,10 @@ const authenticate = (username: string, password: string) => {
       UserModel.findOne({ username: username }).exec((err, user) => {
         if (err) {
           reject(err);
-        } else if (!user) {
+        } else if (!user || !user.password) {
           reject(new Error("User not found"));
         }
+
         bcrypt.compare(password, user!.password, (err, result) => {
           if (err) {
             reject(err);
