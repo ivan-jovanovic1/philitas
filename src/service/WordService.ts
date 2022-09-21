@@ -49,7 +49,7 @@ export namespace WordService {
 
   export async function allWordsList(beginAtPage: number, pageSize: number) {
     return (await WordModel.find()
-      .sort({ word: 1 })
+      .sort({ name: 1 })
       .skip(Page.beginAt(beginAtPage, pageSize))
       .limit(pageSize)) as Word[];
   }

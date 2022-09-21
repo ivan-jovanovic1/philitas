@@ -37,7 +37,7 @@ export namespace FavoriteWordService {
 
     return (await WordModel.find({
       _id: { $in: favorites.wordIds },
-    }).sort({ mainLanguge: -1, word: 1 })) as Word[];
+    }).sort({ language: -1, name: 1 })) as Word[];
   };
 
   export const update = async (

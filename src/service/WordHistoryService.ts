@@ -36,7 +36,7 @@ export namespace WordHistoryService {
 
     return (await WordModel.find({
       _id: { $in: history.wordIds },
-    }).sort({ mainLanguge: -1, word: 1 })) as Word[];
+    }).sort({ language: -1, name: 1 })) as Word[];
   };
 
   export const remove = async (wordId: string, userId: string) => {
