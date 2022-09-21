@@ -5,6 +5,7 @@ import { UserService } from "../service/UserService";
 import { isString } from "../shared/SharedHelpers";
 import { isTokenNotValidResponse } from "../service/TokenValidator";
 import { FavoriteWordService } from "../service/FavoriteWordService";
+import { WordHistoryService } from "../service/WordHistoryService";
 
 export namespace UserController {
   export async function create(req: Request, res: Response) {
@@ -70,10 +71,10 @@ export namespace UserController {
         );
         return;
       }
-      const favCount = await FavoriteWordService.numberOfFavoriteWords(
-        data.user._id!
-      );
 
+      const userId = data.user._id;
+      const favCount = await FavoriteWordService.numberOfWords(userId);
+      const history = await WordHistoryService.numberOfWords(userId);
       const jsonBody = {
         id: data.user._id,
         username: data.user.username,
@@ -82,6 +83,7 @@ export namespace UserController {
         lastName: data.user.lastName,
         jwsToken: data.jwsToken,
         favoritesCount: favCount,
+        historyCount: history,
       };
       res.status(200).send(responseObject({ data: jsonBody }));
     } catch {
@@ -131,17 +133,6 @@ export namespace UserController {
   export async function userFromToken(req: Request, res: Response) {
     const token = req.headers["authorization"]?.split(" ")[1];
     const tokenResponse = isTokenNotValidResponse(token);
-    const userId = req.headers["user-id"]; //?.split(" "[1]);
-
-    if (!isString(userId)) {
-      res.status(401).send(
-        responseObject({
-          errorCode: ErrorCode.undefinedData,
-          errorMessage: "Invalid user id header",
-        })
-      );
-      return;
-    }
 
     if (tokenResponse) {
       res.status(tokenResponse.statusCode).send(tokenResponse.response);
@@ -150,7 +141,6 @@ export namespace UserController {
 
     try {
       const user = await UserService.userFromToken(token!);
-      const favCount = await FavoriteWordService.numberOfFavoriteWords(userId!);
       if (!user) {
         res.status(403).send(
           responseObject({
@@ -160,6 +150,11 @@ export namespace UserController {
         );
         return;
       }
+
+      const userId = user._id;
+      const favCount = await FavoriteWordService.numberOfWords(userId);
+      const history = await WordHistoryService.numberOfWords(userId);
+
       const body = {
         id: user._id,
         username: user.username,
@@ -168,6 +163,7 @@ export namespace UserController {
         lastName: user.lastName,
         jwsToken: token,
         favoritesCount: favCount,
+        historyCount: history,
       };
 
       res.status(200).send(responseObject({ data: body }));

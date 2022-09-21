@@ -46,6 +46,14 @@ export namespace WordHistoryService {
     );
   };
 
+  export const numberOfWords = async (userId: string) => {
+    const modelDB = await UserHistoryModel.findOne({ userId: userId });
+    if (modelDB) {
+      return (modelDB as UserHistory).wordIds.length;
+    }
+    return 0;
+  };
+
   export const add = async (wordId: string, userId: string) => {
     const v = await UserHistoryModel.findOne({ userId: userId });
 
