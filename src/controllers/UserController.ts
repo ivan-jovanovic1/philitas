@@ -25,6 +25,8 @@ export namespace UserController {
               jwsToken: user.jwsToken,
               firstName: user.firstName,
               lastName: user.lastName,
+              favoritesCount: 0,
+              historyCount: 0,
             },
           })
         );

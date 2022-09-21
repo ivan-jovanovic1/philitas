@@ -14,8 +14,8 @@ export namespace UserService {
   export async function save(requestBody: any) {
     const user = new UserModel({
       email: requestBody.email,
-      firstName: requestBody.firstname,
-      lastName: requestBody.lastname,
+      firstName: requestBody.firstName,
+      lastName: requestBody.lastName,
       phoneNumber: requestBody.phonenumber,
       username: requestBody.username,
       password: requestBody.password,
