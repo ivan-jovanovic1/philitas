@@ -37,7 +37,9 @@ export namespace FavoriteWordService {
 
     return (await WordModel.find({
       _id: { $in: favorites.wordIds },
-    }).sort({ language: -1, name: 1 })) as Word[];
+    })
+      .collation({ locale: "sl" })
+      .sort({ name: 1 })) as Word[];
   };
 
   export const update = async (

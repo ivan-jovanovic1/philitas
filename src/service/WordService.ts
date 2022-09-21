@@ -49,6 +49,7 @@ export namespace WordService {
 
   export async function allWordsList(beginAtPage: number, pageSize: number) {
     return (await WordModel.find()
+      .collation({ locale: "sl" })
       .sort({ name: 1 })
       .skip(Page.beginAt(beginAtPage, pageSize))
       .limit(pageSize)) as Word[];
