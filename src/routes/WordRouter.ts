@@ -9,6 +9,7 @@ namespace Route {
   export const searchWord = "/search/:query";
   export const wordId = "/byId/:id";
   export const favorites = "/favorites";
+  export const history = "/history";
 }
 
 async function methodFromRoute(req: Request, res: Response) {
@@ -24,6 +25,10 @@ async function methodFromRoute(req: Request, res: Response) {
     if (req.method === "DELETE") {
       return WordController.updateFavoritesForUser(req, res, true);
     }
+  }
+
+  if (req.route.path === Route.history) {
+    return WordController.historyList(req, res);
   }
 
   if (req.route.path === Route.searchWord) {
@@ -45,6 +50,7 @@ WordRouter.get(Route.list, methodFromRoute);
 WordRouter.get(Route.wordId, methodFromRoute);
 WordRouter.get(Route.favorites, methodFromRoute);
 WordRouter.get(Route.searchWord, methodFromRoute);
+WordRouter.get(Route.history, methodFromRoute);
 
 WordRouter.post(Route.favorites, json(), methodFromRoute);
 WordRouter.delete(Route.favorites, json(), methodFromRoute);

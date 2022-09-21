@@ -48,7 +48,9 @@ export namespace WordController {
         word = await WordService.wordFromDB(query);
       }
 
-      let words: Word[] = await WordModel.find({ name: { $regex: query } });
+      let words: Word[] = await WordModel.find({
+        name: { $regex: query, $options: "i" },
+      });
       words = words.filter((obj) => {
         if (word === null) return true;
         return obj.name !== word.name;
@@ -118,7 +120,7 @@ export namespace WordController {
     const page = Page.normalizedPage(req.query.page);
     const pageSize = Page.normalizedPageSize(req.query.pageSize);
 
-    const userId = req.headers["user-id"]; //?.split(" "[1]);
+    const userId = req.headers["user-id"];
 
     if (!isString(userId)) {
       res.status(401).send(
@@ -132,6 +134,52 @@ export namespace WordController {
 
     try {
       const pagination = await FavoriteWordService.pagination(
+        page,
+        pageSize,
+        userId!
+      );
+      const words = await FavoriteWordService.wordList(page, pageSize, userId!);
+      res.json(
+        responseObject({
+          data: words,
+          pagination: pagination,
+        })
+      );
+    } catch (e) {
+      res.status(500).send(
+        responseObject({
+          errorMessage: "Internal server error.",
+          errorCode: 500,
+        })
+      );
+    }
+  }
+
+  /**
+   * Returns a list of the user's favorite words based on page and page size.
+   * The words are sorted by alphabet order.
+   *
+   * @param req Request with page and pageSize parameters.
+   * @param res Response with pagination and the list of the words for the current page.
+   */
+  export async function historyList(req: Request, res: Response) {
+    const page = Page.normalizedPage(req.query.page);
+    const pageSize = Page.normalizedPageSize(req.query.pageSize);
+
+    const userId = req.headers["user-id"];
+
+    if (!isString(userId)) {
+      res.status(401).send(
+        responseObject({
+          errorCode: ErrorCode.undefinedData,
+          errorMessage: "Invalid user id header",
+        })
+      );
+      return;
+    }
+
+    try {
+      const pagination = await WordHistoryService.pagination(
         page,
         pageSize,
         userId!
