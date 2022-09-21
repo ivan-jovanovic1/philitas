@@ -67,7 +67,7 @@ export namespace FavoriteWordService {
     }
   };
 
-  export const numberOfFavoriteWords = async (userId: string) => {
+  export const numberOfWords = async (userId: string) => {
     const modelDB = await UserFavoritesModel.findOne({ userId: userId });
     if (modelDB) {
       return (modelDB as UserFavorites).wordIds.length;
