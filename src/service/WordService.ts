@@ -42,7 +42,7 @@ export namespace WordService {
     );
     return {
       currentPage: page,
-      allPages: allPages > 0 ? allPages : 1,
+      allPages: allPages,
       pageSize: pageSize,
     };
   }
