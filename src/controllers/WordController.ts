@@ -184,7 +184,7 @@ export namespace WordController {
         pageSize,
         userId!
       );
-      const words = await FavoriteWordService.wordList(page, pageSize, userId!);
+      const words = await WordHistoryService.wordList(page, pageSize, userId!);
       res.json(
         responseObject({
           data: words,
